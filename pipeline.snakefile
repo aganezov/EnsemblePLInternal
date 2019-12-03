@@ -23,8 +23,8 @@ for sample in sample_to_reads_paths.keys():
             suffix = utils.get_sniffles_sens_suffix(config) + "."
         else:
             suffix = ""
-        overall_expected_files.append(alignment_output_dir, f"{sample}_{config[sample][utils.TECH]}.coverage.txt")
-        overall_expected_files.append(raw_svs_output_dir, f"{sample}_{config[sample][utils.TECH]}_{sv_tool}.{suffix}vcf")
+        overall_expected_files.append(alignment_output_dir, f"{sample}_{config[utils.SAMPLES][sample][utils.TECH]}.coverage.txt")
+        overall_expected_files.append(raw_svs_output_dir, f"{sample}_{config[utils.SAMPLES][sample][utils.TECH]}_{sv_tool}.{suffix}vcf")
 
 rule main:
     input: overall_expected_files
