@@ -50,6 +50,7 @@ def get_samples_to_reads_paths(config):
         if TECH not in sample_data or sample_data[TECH].lower() not in ["ont", "pb", "pacbio"]:
             raise ValueError(
                 f"incorrect or missing tech {sample_data[TECH]} specified for sample {sample_name} in data.yaml. Only ONT or PB are supported, and tech specification is required")
+    return sample_to_reads_paths
 
 
 def ensure_ref_correctness(config):
