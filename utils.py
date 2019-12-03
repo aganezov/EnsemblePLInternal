@@ -68,7 +68,7 @@ def get_reads_paths_regex(samples_to_reads_paths):
 
 def get_tech_regex(config):
     techs = set()
-    for sample_name, sample_data in config[SAMPLES]:
+    for sample_name, sample_data in config[SAMPLES].items():
         techs.add(sample_data[TECH])
     return f"({'|'.join(techs)})"
 
