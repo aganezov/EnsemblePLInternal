@@ -54,7 +54,7 @@ rule single_alignment:
     input: lambda wildcards: [read_path for read_path in samples_to_reads_paths[wildcards.sample] if read_path.endswith(wildcards.read_base)][0]
     threads: ngmlr_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT)
     message: "Aligning reads from {input} with NGMLR to {output}"
-    log: os.path.join(alignment_output_dir, LOG, "{sample}_{tech}_{read_base}.sam.log")
+    log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}_{read_base}.sam.log")
     params:
         ngmlr = ngmlr_config.get(utils.PATH, "ngmlr"),
         tech_config = lambda wildcards: "ont" if wildcards.tech.lower() == "ont" else "pacbio",
