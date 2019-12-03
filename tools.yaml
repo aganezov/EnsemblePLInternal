@@ -1,0 +1,20 @@
+sv_tools_enabled:
+  - "sniffles"
+
+tools:
+  tmp_dir: "."
+  samtools:
+    path: "samtools"
+    threads: 100
+  ngmlr:
+    path: "ngmlr"
+    threads: 100
+  sniffles:
+    path: "sniffles"
+    threads: 100
+    min_support: 2
+    min_length: 20
+    max_num_splits: 10
+    max_distance: 1000
+    num_reads_report: -1
+    min_seq_size: 1000
