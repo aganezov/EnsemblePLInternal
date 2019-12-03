@@ -33,7 +33,7 @@ rule merged_sorted:
     message: f"Combining sorted bam files"
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}.sort.bam.log")
     params:
-        samtools = samtools_config.get(PATH, "samtools"),
+        samtools = samtools_config.get(utils.PATH, "samtools"),
     shell:
          "{params.samtools} merge -o {output} {input} &> {log}"
 
