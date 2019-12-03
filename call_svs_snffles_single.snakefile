@@ -14,12 +14,13 @@ sample_to_reads_paths = utils.get_samples_to_reads_paths(config)
 utils.ensure_ref_correctness(config)
 
 sniffles_sens_suffix = utils.get_sniffles_sens_suffix(config)
-
+samples_regex = utils.get_samples_regex(sample_to_reads_paths)
 
 sniffles_config = config.get(utils.TOOLS, {}).get(utils.SNIFFLES, {})
+tech_regex = utils.get_tech_regex(config)
 
 rule sensitive_svs_sniffles:
-    input: os.path.join(alignment_output_dir, "{sample}_{tech}.sort.bam")
+    input: os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.sort.bam")
     output: protected(os.path.join(raw_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".vcf"))
     message: "Calling sensitive set of SVs on {input} with output stored in {output}"
     log: os.path.join(raw_svs_output_dir, utils.LOG, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".vcf.log")
