@@ -47,7 +47,7 @@ rule single_sam_to_sort_bam:
     input: os.path.join(alignment_output_dir, "{sample}_{tech}_{read_base}.sam")
     output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{read_base," + read_paths_regex + "}.sort.bam"))
     threads: lambda wildcards: min(cluster_config.get("single_sam_to_sort_bam", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), samtools_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
-    message: "Transforming an alignment sam file {input} into a sorted bam file {output}. Requested mem {resources.mem_mb}M on {threads} threads. Cluster config " + f"{cluster_config.get('single_sam_to_sort_bam', {})}"
+    message: "Transforming an alignment sam file {input} into a sorted bam file {output}. Requested mem {resources.mem_mb}M on {threads} threads. Cluster config "
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}_{read_base}.sort.bam.log")
     resources:
         mem_mb = lambda wildcards, threads: samtools_config.get(utils.MEM_MB_PER_THREAD, 1000) *  threads
