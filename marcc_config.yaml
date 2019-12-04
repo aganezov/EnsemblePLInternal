@@ -4,7 +4,7 @@
   nCPUs: 2
   nodes: 1
   partition: "shared"
-  mem_mb: "2000M"
+  mem_mb: "2000"
   name: "JOBNAME.{rule}.{wildcards}"
   out: "logs/cluster/{rule}.{wildcards}.out"
   err: "logs/cluster/{rule}.{wildcards}.err"
