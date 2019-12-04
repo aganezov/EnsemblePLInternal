@@ -25,7 +25,7 @@ If the dry run produces satisfactory results, run `snakemake` with production se
 
 #### Example SLURM run:
 ```bash
-snakemake -s pipeline.snakefile --latency-wait 200 -pr -j 20 --rerun-incomplete --cluster "sbatch -c {threads} --partition=parallel --time=72:0:0 --nodes=1 --mem=24G"
+snakemake -s pipeline.snakefile --latency-wait 200 -pr -j 20 --rerun-incomplete --cluster "sbatch --account={cluster.account} --partition={cluster.partition} --job-name={cluster.name} --nodes={cluster.nodes} --cpus-per-task={cluster.nCPUs} --time={cluster.time} --out={cluster.out} --err={cluster.err} --mem={cluster.mem_mb}M"
 ```
 which ensures that
  * no more than 20 jobs (`-j`) are submitted at a time
