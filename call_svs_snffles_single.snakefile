@@ -24,6 +24,8 @@ rule sensitive_svs_sniffles:
     output: protected(os.path.join(raw_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".vcf"))
     message: "Calling sensitive set of SVs on {input} with output stored in {output}"
     log: os.path.join(raw_svs_output_dir, utils.LOG, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".vcf.log")
+    resources:
+        mem_mb = lambda wildcards, threads: sniffles_config.get(utils.MEM_MB_CORE, 10000) + sniffles_config.get(utils.MEM_MB_PER_THREAD, 1000) * threads
     params:
         sniffles = sniffles_config.get(utils.PATH, "sniffles"),
         min_length = sniffles_config.get(utils.MIN_LENGTH, 20),

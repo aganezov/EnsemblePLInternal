@@ -1,0 +1,43 @@
+"__default__":
+  account: "FILL"
+  time: "24:0:0"
+  nCPUs: 2
+  patition: "shared"
+  mem_mb: "2000M"
+  name: "JOBNAME.{rule}.{wildcards}"
+  out: "logs/cluster/{rule}.{wildcards}.out"
+  err: "logs/cluster/{rule}.{wildcards}.err"
+
+single_alignment:
+  time: "72:0:0"
+  patition: "parallel"
+  nCPUs: 24
+  mem_mb: "{resources.mem_mb}"
+  name: "ngmlr.{rule}.{wildcards}"
+
+single_sam_to_sort_bam:
+  time: "12:0:0"
+  partition: "parallel"
+  nCPUs: 24
+  mem_mb: "{resource.mem_mb}"
+  name: "samtools.{rule}.{wildcards}"
+
+merge_sorted:
+  time: "12:0:0"
+  partition: "shared"
+  nCPUs: 1
+  mem_mb: "{resources.mem_mb}"
+  name: "samtools.{rule}.{wildcards}"
+
+merged_coverage:
+  time: "4:0:0"
+  partition: "shared"
+  nCPUs: 1
+  name: "samtools.{rule}.{wildcards}"
+
+sensitive_svs_sniffles:
+  time: "24:0:0"
+  partition: "shared"
+  nCPUs: 5
+  mem_mb: "{resources.mem_mb}"
+  name: "sniffles.{rule}.{wildcards}"
