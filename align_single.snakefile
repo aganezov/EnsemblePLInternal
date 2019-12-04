@@ -34,7 +34,7 @@ rule merged_coverage:
 rule merge_sorted:
     input: lambda wildcards: [os.path.join(alignment_output_dir, wildcards.sample + "_" + wildcards.tech + "_" + os.path.basename(read_path) + ".sort.bam") for read_path in samples_to_reads_paths[wildcards.sample]]
     output: protected(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech}.sort.bam"))
-    message: f"Combining sorted bam files"
+    message: "Combining sorted bam files. Requested mem {resources.mem_mb}M."
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}.sort.bam.log")
     resources:
         mem_mb = lambda wildcards: samtools_config.get(utils.MEM_MB_PER_THREAD, 1000)
@@ -47,7 +47,7 @@ rule single_sam_to_sort_bam:
     input: os.path.join(alignment_output_dir, "{sample}_{tech}_{read_base}.sam")
     output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{read_base," + read_paths_regex + "}.sort.bam"))
     threads: samtools_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT)
-    message: "Transforming an alignment sam file {input} into a sorted bam file {output}"
+    message: "Transforming an alignment sam file {input} into a sorted bam file {output}. Requested mem {resources.mem_mb}M"
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}_{read_base}.sort.bam.log")
     resources:
         mem_mb = lambda wildcards, threads: samtools_config.get(utils.MEM_MB_PER_THREAD, 1000) *  threads
@@ -62,7 +62,7 @@ rule single_alignment:
     output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{read_base," + read_paths_regex + "}.sam"))
     input: lambda wildcards: [read_path for read_path in samples_to_reads_paths[wildcards.sample] if read_path.endswith(wildcards.read_base)][0]
     threads: ngmlr_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT)
-    message: "Aligning reads from {input} with NGMLR to {output}"
+    message: "Aligning reads from {input} with NGMLR to {output}. Requested mem {resources.mem_mb}M"
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}_{read_base}.sam.log")
     resources:
         mem_mb = lambda wildcards, threads: ngmlr_config.get(utils.MEM_MB_CORE, 5000) + ngmlr_config.get(utils.MEM_MB_PER_THREAD, 500) * threads
