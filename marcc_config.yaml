@@ -2,6 +2,7 @@
   account: "FILL"
   time: "24:0:0"
   nCPUs: 2
+  nodes: 1
   patition: "shared"
   mem_mb: "2000M"
   name: "JOBNAME.{rule}.{wildcards}"
