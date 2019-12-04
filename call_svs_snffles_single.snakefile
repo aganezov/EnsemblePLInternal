@@ -22,7 +22,7 @@ tech_regex = utils.get_tech_regex(config)
 rule sensitive_svs_sniffles:
     input: os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.sort.bam")
     output: protected(os.path.join(raw_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".vcf"))
-    message: "Calling sensitive set of SVs on {input} with output stored in {output}. Requested {resources.mem_mb}M of memory on {threads} threads."
+    message: "Calling sensitive set of SVs on {input} with output stored in {output}. Requested {resources.mem_mb}M of memory on {threads} threads. Cluster config " + f"{cluster_config.get('sensitive_svs_sniffles', {})}"
     log: os.path.join(raw_svs_output_dir, utils.LOG, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".vcf.log")
     resources:
         mem_mb = lambda wildcards, threads: sniffles_config.get(utils.MEM_MB_CORE, 10000) + sniffles_config.get(utils.MEM_MB_PER_THREAD, 1000) * threads
