@@ -20,7 +20,7 @@ single_sam_to_sort_bam:
   time: "12:0:0"
   partition: "parallel"
   nCPUs: 24
-  mem_mb: "{resource.mem_mb}"
+  mem_mb: "{resources.mem_mb}"
   name: "samtools.{rule}.{wildcards}"
 
 merge_sorted:
