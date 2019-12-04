@@ -22,6 +22,7 @@ tech_regex = utils.get_tech_regex(config)
 rule sensitive_svs_sniffles:
     input: os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.sort.bam")
     output: protected(os.path.join(raw_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".vcf"))
+    threads: lambda wildcards: min(cluster_config.get("sensitive_svs_sniffles", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), sniffles_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
     message: "Calling sensitive set of SVs on {input} with output stored in {output}. Requested {resources.mem_mb}M of memory on {threads} threads. Cluster config " + f"{cluster_config.get('sensitive_svs_sniffles', {})}"
     log: os.path.join(raw_svs_output_dir, utils.LOG, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".vcf.log")
     resources:
@@ -34,7 +35,6 @@ rule sensitive_svs_sniffles:
         max_distance = sniffles_config.get(utils.MAX_DISTANCE, 1000),
         num_reads_report = sniffles_config.get(utils.NUM_READS_REPORT, -1),
         min_seq_size = sniffles_config.get(utils.MIN_SEQ_SIZE, 1000)
-    threads: lambda wildcards: min(cluster_config.get("sensitive_svs_sniffles", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), sniffles_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
     shell:
         "{params.sniffles} -m {input} -v {output} --threads {threads} --min_support {params.min_support} --max_distance {params.max_distance} --max_num_splits {params.max_num_splits} --min_length {params.min_length} --num_reads_report {params.num_reads_report} --min_seq_size {params.min_seq_size} &> {log}"
 
