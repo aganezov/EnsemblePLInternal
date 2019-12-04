@@ -35,6 +35,8 @@ SV_TOOLS_ENABLED = "sv_tools_enabled"
 MEM_MB_PER_THREAD = "mem_mb_per_thread"
 MEM_MB_CORE = "mem_mb_core"
 
+NCPUS = "nCPUs"
+
 
 def ensure_samples_correctness(config):
     if SAMPLES not in config or not isinstance(config[SAMPLES], dict) or len(config[SAMPLES]) < 1:
