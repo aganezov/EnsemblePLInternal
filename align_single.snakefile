@@ -3,12 +3,17 @@ configfile: "tools.yaml"
 
 import os
 import utils
+from collections import defaultdict
 
 output_dir = config.get(utils.OUTPUT_DIR, ".")
 alignment_output_dir = os.path.join(output_dir, utils.ALIGNMENTS)
 
 utils.ensure_samples_correctness(config)
 samples_to_reads_paths = utils.get_samples_to_reads_paths(config)
+samples_to_basename_readpaths = defaultdict(dict)
+for sample_name, read_paths in samples_to_reads_paths.items():
+    for read_path in read_paths:
+        samples_to_basename_readpaths[sample_name][os.path.basename(read_path)] = read_path
 utils.ensure_ref_correctness(config)
 
 
@@ -60,7 +65,7 @@ rule single_sam_to_sort_bam:
 
 rule single_alignment:
     output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{read_base," + read_paths_regex + "}.sam"))
-    input: lambda wildcards: [read_path for read_path in samples_to_reads_paths[wildcards.sample] if read_path.endswith(wildcards.read_base)][0]
+    input: lambda wildcards: samples_to_basename_readpaths[wildcards.sample][wildcards.read_base] 
     threads: lambda wildcards: min(cluster_config.get("single_alignment", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), ngmlr_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
     message: "Aligning reads from {input} with NGMLR to {output}. Requested mem {resources.mem_mb}M on {threads} threads. Cluster config " + f"{cluster_config.get('single_alignment', {})}"
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}_{read_base}.sam.log")
