@@ -25,6 +25,8 @@ samples_regex = utils.get_samples_regex(samples_to_reads_paths)
 read_paths_regex = utils.get_reads_paths_regex(samples_to_reads_paths)
 tech_regex = utils.get_tech_regex(config)
 
+cluster_config = {}
+
 rule merged_coverage:
     input: os.path.join(alignment_output_dir, "{sample}_{tech}.sort.bam")
     output: os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.coverage.txt")
