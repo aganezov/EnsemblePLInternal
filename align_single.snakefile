@@ -25,8 +25,6 @@ samples_regex = utils.get_samples_regex(samples_to_reads_paths)
 read_paths_regex = utils.get_reads_paths_regex(samples_to_reads_paths)
 tech_regex = utils.get_tech_regex(config)
 
-cluster_config = {}
-
 rule merged_coverage:
     input: os.path.join(alignment_output_dir, "{sample}_{tech}.sort.bam")
     output: os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.coverage.txt")
@@ -54,7 +52,7 @@ rule single_sam_to_sort_bam:
     input: os.path.join(alignment_output_dir, "{sample}_{tech}_{read_base}.sam")
     output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{read_base," + read_paths_regex + "}.sort.bam"))
     threads: lambda wildcards: min(cluster_config.get("single_sam_to_sort_bam", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), samtools_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
-    # message: "Transforming an alignment sam file {input} into a sorted bam file {output}. Requested mem {resources.mem_mb}M on {threads} threads. Cluster config "
+    message: "Transforming an alignment sam file {input} into a sorted bam file {output}. Requested mem {resources.mem_mb}M on {threads} threads. Cluster config "
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}_{read_base}.sort.bam.log")
     resources:
         mem_mb = lambda wildcards, threads: samtools_config.get(utils.MEM_MB_PER_THREAD, 1000) *  threads
@@ -69,7 +67,7 @@ rule single_alignment:
     output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{read_base," + read_paths_regex + "}.sam"))
     input: lambda wildcards: samples_to_basename_readpaths[wildcards.sample][wildcards.read_base]
     threads: lambda wildcards: min(cluster_config.get("single_alignment", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), ngmlr_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
-    # message: "Aligning reads from {input} with NGMLR to {output}. Requested mem {resources.mem_mb}M on {threads} threads. Cluster config "
+    message: "Aligning reads from {input} with NGMLR to {output}. Requested mem {resources.mem_mb}M on {threads} threads. Cluster config "
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}_{read_base}.sam.log")
     resources:
         mem_mb = lambda wildcards, threads: ngmlr_config.get(utils.MEM_MB_CORE, 5000) + ngmlr_config.get(utils.MEM_MB_PER_THREAD, 500) * threads
