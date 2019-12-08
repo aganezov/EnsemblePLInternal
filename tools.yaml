@@ -7,6 +7,7 @@ tools:
     path: "samtools"
     threads: 100
     mem_mb_per_thread: 1000
+    mem_mb_core: 2000
   ngmlr:
     path: "ngmlr"
     threads: 100

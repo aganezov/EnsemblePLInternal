@@ -42,7 +42,7 @@ rule merge_sorted:
     message: "Combining sorted bam files. Requested mem {resources.mem_mb}M."
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}.sort.bam.log")
     resources:
-        mem_mb = lambda wildcards: samtools_config.get(utils.MEM_MB_PER_THREAD, 1000)
+        mem_mb = lambda wildcards: samtools_config.get(utils.MEM_MB_CORE, 2000) + samtools_config.get(utils.MEM_MB_PER_THREAD, 1000)
     params:
         samtools = samtools_config.get(utils.PATH, "samtools"),
     shell:
@@ -55,7 +55,7 @@ rule single_sam_to_sort_bam:
     message: "Transforming an alignment sam file {input} into a sorted bam file {output}. Requested mem {resources.mem_mb}M on {threads} threads. Cluster config "
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}_{read_base}.sort.bam.log")
     resources:
-        mem_mb = lambda wildcards, threads: samtools_config.get(utils.MEM_MB_PER_THREAD, 1000) *  threads
+        mem_mb = lambda wildcards, threads: samtools_config.get(utils.MEM_MB_CORE, 2000) + samtools_config.get(utils.MEM_MB_PER_THREAD, 1000) *  threads
     params:
         tmp_dir = lambda wc: os.path.join(config["tools"].get(utils.TMP_DIR, "."), f"samtools_tmp_{wc.sample}"),
         samtools = samtools_config.get(utils.PATH, "samtools"),
