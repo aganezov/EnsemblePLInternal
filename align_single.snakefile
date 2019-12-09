@@ -110,8 +110,7 @@ rule single_alignment:
 
 rule ensure_ngmlr_input_extension:
     input: os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}", "{sample}_{tech}_{seq_format}_{chunk_id}")
-    output:temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}",
-                             "{sample}_{tech}_{seq_format}_{chunk_id,[a-z]+}.{seq_format}"))
+    output:temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}", "{sample}_{tech}_{seq_format}_{chunk_id,[a-z]+}.{seq_format}"))
     shell: "mv {input} {output}"
 
 
@@ -125,7 +124,7 @@ def get_fastx_files(sample, extension):
 
 checkpoint split_fastq:
     output:
-          directory(os.path.join(alignment_output_dir, "{sample}_{tech}_fastq"))
+        directory(os.path.join(alignment_output_dir, "{sample}_{tech}_fastq"))
     input:
         fastq=lambda wc: get_fastx_files(sample=wc.sample, extension=("fastq", "fq")),
         fastq_gz=lambda wc: get_fastx_files(sample=wc.sample, extension=("fastq.gz", "fa.gz")),
