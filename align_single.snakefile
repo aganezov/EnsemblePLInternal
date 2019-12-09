@@ -78,7 +78,9 @@ rule merge_sorted:
 
 rule single_sam_to_sort_bam:
     output:temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}_{chunk_id,[a-z]+}.sort.bam"))
-    input: os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}_{chunk_id}.sam")
+    input:
+        sam=os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}_{chunk_id}.sam"),
+        tmp_dir=lambda wc: os.path.join(config["tools"].get(utils.TMP_DIR, ""), f"samtools_tmp_{wc.sample}_{wc.tech}_{wc.seq_format}_{wc.chunk_id}")
     threads:lambda wildcards: min(cluster_config.get("single_sam_to_sort_bam", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), samtools_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
     message: "Transforming an alignment sam file {input} into a sorted bam file {output}. Requested mem {resources.mem_mb}M on {threads} threads. Cluster config "
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}_{seq_format}", "{sample}_{tech}_{seq_format}_{chunk_id}.sort.bam.log")
@@ -89,7 +91,7 @@ rule single_sam_to_sort_bam:
         samtools=samtools_config.get(utils.PATH, "samtools"),
         mem_mb_per_thread=samtools_config.get(utils.MEM_MB_PER_THREAD, 1000),
     shell:
-        "{params.samtools} sort -O bam -o {output} -@ {threads} -m {params.mem_mb_per_thread}M -T {params.tmp_dir} {input} &> {log}"
+        "{params.samtools} sort -O bam -o {output} -@ {threads} -m {params.mem_mb_per_thread}M -T {params.tmp_dir} {input.sam} &> {log}"
 
 rule single_alignment:
     output:temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}" + "_{chunk_id,[a-z]+}.sam"))
@@ -148,4 +150,8 @@ checkpoint split_fasta:
     shell:
         "mkdir {output} && cat {params.cut_command} {params.zcat_command} | split -l {params.fasta_cnt} -a 3 - {params.prefix}"
 
-localrules: ensure_ngmlr_input_extension
+rule samtools_tmp_dir:
+    output: directory(os.path.join(config["tools"].get(utils.TMP_DIR, ""), "samtools_tmp_{sample}_{tech}_{seq_format}_{chunk_id}"))
+    shell: "mkdir -p {output}"
+
+localrules: ensure_ngmlr_input_extension, samtools_tmp_dir
