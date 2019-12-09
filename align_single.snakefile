@@ -125,6 +125,6 @@ rule split_fasta:
           prefix=lambda wc: os.path.join(alignment_output_dir, f"{wc.sample}_{wc.tech}_fasta_"),
           fastq_cnt=lambda wc: config.get(utils.READS_CNT_PER_RUN, 1000000) * 2,
     shell:
-        "cat {params.cut_command} {params.zcat_command} & <({params.zcat} {input.fasta_gz}) | split -l {params.fasta_cnt} -a 3 - {params.prefix}"
+        "cat {params.cut_command} {params.zcat_command} | split -l {params.fasta_cnt} -a 3 - {params.prefix}"
 
 localrules: ensure_ngmlr_input_extension
