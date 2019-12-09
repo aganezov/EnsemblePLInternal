@@ -2,7 +2,7 @@ sv_tools_enabled:
   - "sniffles"
 
 tools:
-  tmp_dir: "."
+  tmp_dir: ""
   samtools:
     path: "samtools"
     threads: 100
