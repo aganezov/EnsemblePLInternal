@@ -151,7 +151,7 @@ checkpoint split_fasta:
         "mkdir {output} && cat {params.cut_command} {params.zcat_command} | split -l {params.fasta_cnt} -a 3 - {params.prefix}"
 
 rule samtools_tmp_dir:
-    output: directory(os.path.join(config["tools"].get(utils.TMP_DIR, ""), "samtools_tmp_{sample}_{tech}_{seq_format}_{chunk_id}"))
+    output: temp(directory(os.path.join(config["tools"].get(utils.TMP_DIR, ""), "samtools_tmp_{sample}_{tech}_{seq_format}_{chunk_id}")))
     shell: "mkdir -p {output}"
 
 localrules: ensure_ngmlr_input_extension, samtools_tmp_dir
