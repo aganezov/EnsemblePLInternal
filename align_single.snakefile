@@ -81,7 +81,7 @@ rule single_alignment:
          "{params.ngmlr} -r {params.reference} -q {input} -t {threads} -o {output} --bam-fix -x {params.tech_config} &> {log}"
 
 rule samtools_tmp_dir:
-    output: directory(os.path.join(config["tools"].get(utils.TMP_DIR, ""), "samtools_tmp_{sample}_{tech}_{read_base}"))
+    output: temp(directory(os.path.join(config["tools"].get(utils.TMP_DIR, ""), "samtools_tmp_{sample}_{tech}_{read_base}")))
     shell: "mkdir -p {output}"
 
 localrules: samtools_tmp_dir
