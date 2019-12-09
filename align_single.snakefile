@@ -50,14 +50,14 @@ def aggregated_input_for_bam_merging(wildcards):
     extensions = read_extensions_per_sample(sample=wildcards.sample)
     result = []
     if "fasta" in extensions:
-        chekpoint_output = checkpoints.split_fasta.get(**wildcards).output[0]
+        chekpoint_output = os.path.dirname(checkpoints.split_fasta.get(**wildcards).output[0])
         result.extend(expand(
             os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fasta_" + "{chunk_id}.sort.bam"),
             chunk_id=glob_wildcards(
                 os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fasta_" + "_{chunk_id,[a-z]+}")).chunk_id
         ))
     if "fastq" in extensions:
-        chekpoint_output = checkpoints.split_fastq.get(**wildcards).output[0]
+        chekpoint_output = os.path.dirname(checkpoints.split_fastq.get(**wildcards).output[0])
         result.extend(expand(
             os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fastq_" + "{chunk_id}.sort.bam"),
             chunk_id=glob_wildcards(
@@ -124,7 +124,7 @@ def get_fastx_files(sample, extension):
 
 checkpoint split_fastq:
     output:
-        directory(os.path.join(alignment_output_dir, "{sample}_{tech}_fastq"))
+        os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fastq}", "{sample}_{tech}_fastq_{chunk_id,[a-z]+}")
     input:
         fastq=lambda wc: get_fastx_files(sample=wc.sample, extension=("fastq", "fq")),
         fastq_gz=lambda wc: get_fastx_files(sample=wc.sample, extension=("fastq.gz", "fa.gz")),
@@ -138,7 +138,7 @@ checkpoint split_fastq:
 
 checkpoint split_fasta:
     output:
-        directory(os.path.join(alignment_output_dir, "{sample}_{tech}_fasta"))
+        os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fasta}", "{sample}_{tech}_fasta_{chunk_id,[a-z]+}")
     input:
         fasta=lambda wc: get_fastx_files(sample=wc.sample, extension=("fasta", "fa")),
         fasta_gz=lambda wc: get_fastx_files(sample=wc.sample, extension=("fasta.gz", "fa.gz")),
