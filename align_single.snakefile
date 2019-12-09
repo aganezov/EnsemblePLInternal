@@ -101,7 +101,7 @@ def get_fastx_files(sample, extension):
 
 rule split_fastq:
     output:
-          temp(dynamic(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fastq_{chunk_id,[a-z]+}")))
+          temp(dynamic(os.path.join(alignment_output_dir, "{sample}_{tech}_fastq_{chunk_id}")))
     input:
         fastq=lambda wc: get_fastx_files(sample=wc.sample, extension=("fastq", "fq")),
          fastq_gz=lambda wc: get_fastx_files(sample=wc.sample, extension=("fastq.gz", "fa.gz")),
