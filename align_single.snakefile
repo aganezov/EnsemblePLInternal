@@ -46,7 +46,7 @@ rule merge_sorted:
     params:
         samtools = samtools_config.get(utils.PATH, "samtools"),
     shell:
-         "{params.samtools} merge -o {output} {input} &> {log}"
+         "{params.samtools} merge {output} {input} &> {log}"
 
 rule single_sam_to_sort_bam:
     input:
