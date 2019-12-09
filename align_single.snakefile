@@ -37,7 +37,9 @@ rule merged_coverage:
         "{params.samtools} depth -a {input} | {params.awk} \'{{sum += $3}} END {{print \"Average coverage (all) = \",sum/NR}}\' > {output} 2> {log}"
 
 rule merge_sorted:
-    input: lambda wildcards: [os.path.join(alignment_output_dir, wildcards.sample + "_" + wildcards.tech + "_" + os.path.basename(read_path) + ".sort.bam") for read_path in samples_to_reads_paths[wildcards.sample]]
+    input:
+        fasta=dynamic(os.path.join(alignment_output_dir, "{sample}_{tech}_fasta_{chunk_id}.sort.bam")),
+        fastq=dynamic(os.path.join(alignment_output_dir, "{sample}_{tech}_fastq_{chunk_id}.sort.bam")),
     output: protected(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech}.sort.bam"))
     message: "Combining sorted bam files. Requested mem {resources.mem_mb}M."
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}.sort.bam.log")
@@ -49,7 +51,7 @@ rule merge_sorted:
          "{params.samtools} merge -o {output} {input} &> {log}"
 
 rule single_sam_to_sort_bam:
-    input: os.path.join(alignment_output_dir, "{sample}_{tech}_{read_base}.sam")
+    input: os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}_{chunk_id}.sam")
     output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{read_base," + read_paths_regex + "}.sort.bam"))
     threads: lambda wildcards: min(cluster_config.get("single_sam_to_sort_bam", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), samtools_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
     message: "Transforming an alignment sam file {input} into a sorted bam file {output}. Requested mem {resources.mem_mb}M on {threads} threads. Cluster config "
@@ -64,8 +66,8 @@ rule single_sam_to_sort_bam:
          "{params.samtools} sort -O bam -o {output} -@ {threads} -m {params.mem_mb_per_thread}M -T {params.tmp_dir} {input} &> {log}"
 
 rule single_alignment:
-    output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{read_base," + read_paths_regex + "}.sam"))
-    input: lambda wildcards: samples_to_basename_readpaths[wildcards.sample][wildcards.read_base]
+    output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format}_{chunk_id}.sam"))
+    input: os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}_{chunk_id}.{seq_format}")
     threads: lambda wildcards: min(cluster_config.get("single_alignment", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), ngmlr_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
     message: "Aligning reads from {input} with NGMLR to {output}. Requested mem {resources.mem_mb}M on {threads} threads. Cluster config "
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}_{read_base}.sam.log")
@@ -77,3 +79,32 @@ rule single_alignment:
         reference = config[utils.REFERENCE],
     shell:
          "{params.ngmlr} -r {params.reference} -q {input} -t {threads} -o {output} --bam-fix -x {params.tech_config} &> {log}"
+
+rule ensure_ngmlr_input_extension:
+    input: os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format}_{chunk_id}")
+    output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format}_{chunk_id}.{seq_format}"))
+    shell: "mv {input} {output}"
+
+rule split_fastq:
+    output:
+          temp(dynamic(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fastq_{chunk_id}")))
+    input:
+        fastq=[],
+        fastq_gz=[],
+    params:
+        prefix=os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format}_"),
+    shell:
+        "cut <({params.cut} {input.fastq}) & <({params.zcat} {input.fastq_gz}) | split -l {params.fastq_cnt} -a 3 - {params.prefix}"
+
+rule split_fasta:
+    output:
+          temp(dynamic(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fasta_{chunk_id}")))
+    input:
+        fasta=[],
+        fasta_gz=[],
+    params:
+        prefix=os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format}_"),
+    shell:
+        "cut <({params.cut} {input.fasta}) & <({params.zcat} {input.fasta_gz}) | split -l {params.fasta_cnt} -a 3 - {params.prefix}"
+
+localrules: ensure_ngmlr_input_extension
