@@ -115,7 +115,7 @@ rule split_fastq:
 
 rule split_fasta:
     output:
-          temp(dynamic(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fasta_{chunk_id,[a-z]+}")))
+          temp(dynamic(os.path.join(alignment_output_dir, "{sample}_{tech}_fasta_{chunk_id}")))
     input:
         fasta=lambda wc: get_fastx_files(sample=wc.sample, extension=("fasta", "fa")),
          fasta_gz=lambda wc: get_fastx_files(sample=wc.sample, extension=("fasta.gz", "fa.gz")),
