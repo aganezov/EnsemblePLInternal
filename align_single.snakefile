@@ -83,3 +83,5 @@ rule single_alignment:
 rule samtools_tmp_dir:
     output: directory(os.path.join(config["tools"].get(utils.TMP_DIR, ""), "samtools_tmp_{sample}_{tech}_{read_base}"))
     shell: "mkdir -p {output}"
+
+localrules: samtools_tmp_dir
