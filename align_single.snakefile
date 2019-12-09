@@ -57,7 +57,7 @@ rule single_sam_to_sort_bam:
     resources:
         mem_mb = lambda wildcards, threads: samtools_config.get(utils.MEM_MB_CORE, 2000) + samtools_config.get(utils.MEM_MB_PER_THREAD, 1000) *  threads
     params:
-        tmp_dir = lambda wc: os.path.join(config["tools"].get(utils.TMP_DIR, "."), f"samtools_tmp_{wc.sample}"),
+        tmp_dir = lambda wc: os.path.join(config["tools"].get(utils.TMP_DIR, ""), f"samtools_tmp_{wc.sample}_{wc.tech}_{wc.read_base}" + os.path.sep),
         samtools = samtools_config.get(utils.PATH, "samtools"),
         mem_mb_per_thread = samtools_config.get(utils.MEM_MB_PER_THREAD, 1000),
     shell:
