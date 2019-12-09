@@ -49,7 +49,9 @@ rule merge_sorted:
          "{params.samtools} merge -o {output} {input} &> {log}"
 
 rule single_sam_to_sort_bam:
-    input: os.path.join(alignment_output_dir, "{sample}_{tech}_{read_base}.sam")
+    input:
+        sam=os.path.join(alignment_output_dir, "{sample}_{tech}_{read_base}.sam"),
+        tmp_dir=lambda wc: os.path.join(config["tools"].get(utils.TMP_DIR, ""), f"samtools_tmp_{wc.sample}_{wc.tech}_{wc.read_base}"),
     output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{read_base," + read_paths_regex + "}.sort.bam"))
     threads: lambda wildcards: min(cluster_config.get("single_sam_to_sort_bam", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), samtools_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
     message: "Transforming an alignment sam file {input} into a sorted bam file {output}. Requested mem {resources.mem_mb}M on {threads} threads. Cluster config "
@@ -61,7 +63,7 @@ rule single_sam_to_sort_bam:
         samtools = samtools_config.get(utils.PATH, "samtools"),
         mem_mb_per_thread = samtools_config.get(utils.MEM_MB_PER_THREAD, 1000),
     shell:
-         "{params.samtools} sort -O bam -o {output} -@ {threads} -m {params.mem_mb_per_thread}M -T {params.tmp_dir} {input} &> {log}"
+         "{params.samtools} sort -O bam -o {output} -@ {threads} -m {params.mem_mb_per_thread}M -T {params.tmp_dir} {input.sam} &> {log}"
 
 rule single_alignment:
     output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{read_base," + read_paths_regex + "}.sam"))
@@ -77,3 +79,7 @@ rule single_alignment:
         reference = config[utils.REFERENCE],
     shell:
          "{params.ngmlr} -r {params.reference} -q {input} -t {threads} -o {output} --bam-fix -x {params.tech_config} &> {log}"
+
+rule samtools_tmp_dir:
+    output: directory(os.path.join(config["tools"].get(utils.TMP_DIR, ""), "samtools_tmp_{sample}_{tech}_{read_base}"))
+    shell: "mkdir -p {output}"
