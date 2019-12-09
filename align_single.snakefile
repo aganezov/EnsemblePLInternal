@@ -50,19 +50,19 @@ def aggregated_input_for_bam_merging(wildcards):
     extensions = read_extensions_per_sample(sample=wildcards.sample)
     result = []
     if "fasta" in extensions:
-        chekpoint_output = os.path.dirname(checkpoints.split_fasta.get(**wildcards).output[0])
+        chekpoint_output = checkpoints.split_fasta.get(**wildcards).output[0]
         result.extend(expand(
             os.path.join(alignment_output_dir, f"{wildcards.sample}_{wildcards.tech}_fasta_" + "{chunk_id}.sort.bam"),
             chunk_id=glob_wildcards(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fasta_" + "_{chunk_id}")).chunk_id
         ))
     if "fastq" in extensions:
-        chekpoint_output = os.path.dirname(checkpoints.split_fastq.get(**wildcards).output[0])
+        chekpoint_output = checkpoints.split_fastq.get(**wildcards).output[0]
         print(chekpoint_output)
-        print(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fastq_" + "_{chunk_id}"))
+        print(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fastq_" + "{chunk_id}"))
         result.extend(expand(
             os.path.join(alignment_output_dir, f"{wildcards.sample}_{wildcards.tech}_fastq_" + "{chunk_id}.sort.bam"),
             chunk_id=glob_wildcards(
-                os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fastq_" + "_{chunk_id}")).chunk_id
+                os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fastq_" + "{chunk_id}")).chunk_id
         ))
     return result
 
