@@ -124,7 +124,7 @@ def get_fastx_files(sample, extension):
 
 checkpoint split_fastq:
     output:
-        temp(directory(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fastq}")))
+        temp(directory(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fastq")))
     input:
         fastq=lambda wc: get_fastx_files(sample=wc.sample, extension=("fastq", "fq")),
         fastq_gz=lambda wc: get_fastx_files(sample=wc.sample, extension=("fastq.gz", "fa.gz")),
