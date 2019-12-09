@@ -57,12 +57,9 @@ def aggregated_input_for_bam_merging(wildcards):
         ))
     if "fastq" in extensions:
         chekpoint_output = checkpoints.split_fastq.get(**wildcards).output[0]
-        print(chekpoint_output)
-        print(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fastq_" + "{chunk_id}"))
         result.extend(expand(
             os.path.join(alignment_output_dir, f"{wildcards.sample}_{wildcards.tech}_fastq_" + "{chunk_id}.sort.bam"),
-            chunk_id=glob_wildcards(
-                os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fastq_" + "{chunk_id}")).chunk_id
+            chunk_id=glob_wildcards(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fastq_" + "{chunk_id}")).chunk_id
         ))
     return result
 
@@ -139,7 +136,7 @@ checkpoint split_fastq:
 
 checkpoint split_fasta:
     output:
-        os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fasta}", "{sample}_{tech}_fasta_{chunk_id,[a-z]+}")
+        temp(directory(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fasta")))
     input:
         fasta=lambda wc: get_fastx_files(sample=wc.sample, extension=("fasta", "fa")),
         fasta_gz=lambda wc: get_fastx_files(sample=wc.sample, extension=("fasta.gz", "fa.gz")),
@@ -149,6 +146,6 @@ checkpoint split_fasta:
         prefix=lambda wc: os.path.join(alignment_output_dir, f"{wc.sample}_{wc.tech}_fasta", f"{wc.sample}_{wc.tech}_fasta_"),
         fastq_cnt=lambda wc: config.get(utils.READS_CNT_PER_RUN, 1000000) * 2,
     shell:
-        "cat {params.cut_command} {params.zcat_command} | split -l {params.fasta_cnt} -a 3 - {params.prefix}"
+        "mkdir {output} && cat {params.cut_command} {params.zcat_command} | split -l {params.fasta_cnt} -a 3 - {params.prefix}"
 
 localrules: ensure_ngmlr_input_extension
