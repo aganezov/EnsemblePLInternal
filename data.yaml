@@ -17,4 +17,4 @@ samples:
 ref: "GRCh38.fa"
 
 # not required. `alignments`, `svs`, etc subdirs will be created in it. Default is "."
-output_dir: "."
+output_dir: ""

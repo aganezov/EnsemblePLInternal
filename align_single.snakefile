@@ -36,11 +36,18 @@ rule merged_coverage:
     shell:
         "{params.samtools} depth -a {input} | {params.awk} \'{{sum += $3}} END {{print \"Average coverage (all) = \",sum/NR}}\' > {output} 2> {log}"
 
+def read_extensions_per_sample(sample):
+    result = set()
+    for read_path in samples_to_reads_paths[sample]:
+        if read_path.endswith(("fastq", "fq", "fastq.gz", "fq.gz")):
+            result.add("fastq")
+        elif read_path.endswith(("fasta", "fa", "fasta.gz", "fa.gz")):
+            result.add("fasta")
+    return sorted(result)
+
 rule merge_sorted:
-    input:
-        fasta=dynamic(os.path.join(alignment_output_dir, "{sample}_{tech}_fasta_{chunk_id}.sort.bam")),
-        fastq=dynamic(os.path.join(alignment_output_dir, "{sample}_{tech}_fastq_{chunk_id}.sort.bam")),
-    output: protected(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech}.sort.bam"))
+    input: lambda wc: expand(dynamic(os.path.join(alignment_output_dir, "{{sample}}_{{tech}}_{extension}_{{chunk_id}}.sort.bam")), extension=read_extensions_per_sample(sample=wc.sample))
+    output: protected(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.sort.bam"))
     message: "Combining sorted bam files. Requested mem {resources.mem_mb}M."
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}.sort.bam.log")
     resources:
@@ -52,21 +59,21 @@ rule merge_sorted:
 
 rule single_sam_to_sort_bam:
     input: os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}_{chunk_id}.sam")
-    output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{read_base," + read_paths_regex + "}.sort.bam"))
+    output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}_{chunk_id,[a-z]+}.sort.bam"))
     threads: lambda wildcards: min(cluster_config.get("single_sam_to_sort_bam", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), samtools_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
     message: "Transforming an alignment sam file {input} into a sorted bam file {output}. Requested mem {resources.mem_mb}M on {threads} threads. Cluster config "
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}_{read_base}.sort.bam.log")
     resources:
         mem_mb = lambda wildcards, threads: samtools_config.get(utils.MEM_MB_CORE, 2000) + samtools_config.get(utils.MEM_MB_PER_THREAD, 1000) *  threads
     params:
-        tmp_dir = lambda wc: os.path.join(config["tools"].get(utils.TMP_DIR, "."), f"samtools_tmp_{wc.sample}"),
+        tmp_dir = lambda wc: os.path.join(config["tools"].get(utils.TMP_DIR, ""), f"samtools_tmp_{wc.sample}_{wc.tech}_{wc.seq_format}_{wc.chunk_id}" + os.path.sep),
         samtools = samtools_config.get(utils.PATH, "samtools"),
         mem_mb_per_thread = samtools_config.get(utils.MEM_MB_PER_THREAD, 1000),
     shell:
          "{params.samtools} sort -O bam -o {output} -@ {threads} -m {params.mem_mb_per_thread}M -T {params.tmp_dir} {input} &> {log}"
 
 rule single_alignment:
-    output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format}_{chunk_id}.sam"))
+    output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}_{chunk_id,[a-z]+}.sam"))
     input: os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}_{chunk_id}.{seq_format}")
     threads: lambda wildcards: min(cluster_config.get("single_alignment", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), ngmlr_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
     message: "Aligning reads from {input} with NGMLR to {output}. Requested mem {resources.mem_mb}M on {threads} threads. Cluster config "
@@ -82,29 +89,42 @@ rule single_alignment:
 
 rule ensure_ngmlr_input_extension:
     input: os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format}_{chunk_id}")
-    output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format}_{chunk_id}.{seq_format}"))
+    output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}_{chunk_id,[a-z]+}.{seq_format,(fastq|fasta)}"))
     shell: "mv {input} {output}"
+
+def get_fastx_files(sample, extension):
+    result = []
+    for read_path in samples_to_reads_paths[sample]:
+        if read_path.endswith(extension):
+            result.append(read_path)
+    return result
 
 rule split_fastq:
     output:
-          temp(dynamic(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fastq_{chunk_id}")))
+          temp(dynamic(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fastq_{chunk_id,[a-z]+}")))
     input:
-        fastq=[],
-        fastq_gz=[],
+        fastq=lambda wc: get_fastx_files(sample=wc.sample, extension=("fastq", "fq")),
+         fastq_gz=lambda wc: get_fastx_files(sample=wc.sample, extension=("fastq.gz", "fa.gz")),
     params:
-        prefix=os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format}_"),
+        cut_command = lambda wc: "" if len(get_fastx_files(sample=wc.sample, extension=("fastq", "fq"))) == 0 else "<(cat {fastq})".format(fastq=" ".join(get_fastx_files(sample=wc.sample, extension=("fastq", "fq")))),
+          zcat_command = lambda wc: "" if len(get_fastx_files(sample=wc.sample, extension=("fastq.gz", "fq.gz"))) == 0 else "<(zcat {fastq_gz})".format(fastq_gz=" ".join(get_fastx_files(sample=wc.sample, extension=("fastq.gz", "fq.gz")))),
+          prefix=lambda wc: os.path.join(alignment_output_dir, f"{wc.sample}_{wc.tech}_fastq_"),
+          fastq_cnt=lambda wc: config.get(utils.READS_CNT_PER_RUN, 1000000) * 4,
     shell:
-        "cut <({params.cut} {input.fastq}) & <({params.zcat} {input.fastq_gz}) | split -l {params.fastq_cnt} -a 3 - {params.prefix}"
+        "cat {params.cut_command} {params.zcat_command} | split -l {params.fastq_cnt} -a 3 - {params.prefix}"
 
 rule split_fasta:
     output:
-          temp(dynamic(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fasta_{chunk_id}")))
+          temp(dynamic(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fasta_{chunk_id,[a-z]+}")))
     input:
-        fasta=[],
-        fasta_gz=[],
+        fasta=lambda wc: get_fastx_files(sample=wc.sample, extension=("fasta", "fa")),
+         fasta_gz=lambda wc: get_fastx_files(sample=wc.sample, extension=("fasta.gz", "fa.gz")),
     params:
-        prefix=os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format}_"),
+        cut_command = lambda wc: "" if len(get_fastx_files(sample=wc.sample, extension=("fasta", "fa"))) == 0 else "<(cat {fasta})".format(fasta=" ".join(get_fastx_files(sample=wc.sample, extension=("fasta", "fa")))),
+          zcat_command = lambda wc: "" if len(get_fastx_files(sample=wc.sample, extension=("fasta.gz", "fa.gz"))) == 0 else "<(zcat {fasta_gz})".format(fasta_gz=" ".join(get_fastx_files(sample=wc.sample, extension=("fasta.gz", "fa.gz")))),
+          prefix=lambda wc: os.path.join(alignment_output_dir, f"{wc.sample}_{wc.tech}_fasta_"),
+          fastq_cnt=lambda wc: config.get(utils.READS_CNT_PER_RUN, 1000000) * 2,
     shell:
-        "cut <({params.cut} {input.fasta}) & <({params.zcat} {input.fasta_gz}) | split -l {params.fasta_cnt} -a 3 - {params.prefix}"
+        "cat {params.cut_command} {params.zcat_command} & <({params.zcat} {input.fasta_gz}) | split -l {params.fasta_cnt} -a 3 - {params.prefix}"
 
 localrules: ensure_ngmlr_input_extension

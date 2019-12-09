@@ -9,6 +9,7 @@ tools:
     mem_mb_per_thread: 1000
     mem_mb_core: 2000
   ngmlr:
+    reads_cnt_per_run: 1000000
     path: "ngmlr"
     threads: 100
     time: "72:0:0"

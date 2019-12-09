@@ -18,6 +18,7 @@ PATH = "path"
 TMP_DIR = "tmp_dir"
 TECH = "tech"
 REFERENCE = "ref"
+READS_CNT_PER_RUN = "reads_cnt_per_run"
 
 
 RAW = "raw"
@@ -50,8 +51,8 @@ def get_samples_to_reads_paths(config):
             raise ValueError(
                 f"Error when parsing reads paths for sample {sample_name} sample. Make sure the entries are formatted as a list of strings under the {READS_PATHS} key")
         for read_path in sample_data[READS_PATHS]:
-            if not read_path.endswith(("fastq", "fq", "fastq.gz", "fq.gz")):
-                raise ValueError(f"Unsupported input format for read path {read_path}. Only 'fastq', 'fq', 'fastq.gz', and 'fq.gz' are supported")
+            if not read_path.endswith(("fastq", "fq", "fastq.gz", "fq.gz", "fasta", "fasta.gz", "fa", "fa.gz")):
+                raise ValueError(f"Unsupported input format for read path {read_path}. Only 'fastq', 'fq', 'fastq.gz', 'fq.gz', 'fasta', 'fasta.gz', 'fa', and 'fa.gz' are supported")
             samples_to_reads_paths[sample_name].append(read_path)
         if TECH not in sample_data or sample_data[TECH].lower() not in ["ont", "pb", "pacbio"]:
             raise ValueError(
