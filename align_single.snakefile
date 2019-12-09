@@ -89,7 +89,7 @@ rule single_alignment:
 
 rule ensure_ngmlr_input_extension:
     input: os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format}_{chunk_id}")
-    output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}_{chunk_id,[a-z]+}.{seq_format,(fastq|fasta)}"))
+    output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}_{chunk_id,[a-z]+}.{seq_format}"))
     shell: "mv {input} {output}"
 
 def get_fastx_files(sample, extension):
