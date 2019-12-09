@@ -46,7 +46,7 @@ def read_extensions_per_sample(sample):
     return sorted(result)
 
 rule merge_sorted:
-    input: lambda wc: expand(dynamic(os.path.join(alignment_output_dir, "{{sample}}_{{tech}}_{extension}_{{chunk_id}}.sort.bam")), extension=read_extensions_per_sample(sample=wc.sample))
+    input: lambda wc: dynamic(expand(os.path.join(alignment_output_dir, "{{sample}}_{{tech}}_{extension}_{{chunk_id}}.sort.bam"), extension=read_extensions_per_sample(sample=wc.sample)))
     output: protected(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.sort.bam"))
     message: "Combining sorted bam files. Requested mem {resources.mem_mb}M."
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}.sort.bam.log")
