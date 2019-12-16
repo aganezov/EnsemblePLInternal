@@ -63,10 +63,20 @@ def aggregated_input_for_bam_merging(wildcards):
         ))
     return result
 
+def split_fastx_dirs(wildcards):
+    extensions = read_extensions_per_sample(sample=wildcards.sample)
+    result = []
+    if "fasta" in extensions:
+        result.append(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fasta"))
+    if "fastq" in extensions:
+        result.append(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fastq"))
+    return result
+
 
 rule merge_sorted:
     output: protected(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.sort.bam"))
-    input: aggregated_input_for_bam_merging
+    input: bams=aggregated_input_for_bam_merging,
+           tmp_fastq_dir=split_fastx_dirs,
     message: "Combining sorted bam files. Requested mem {resources.mem_mb}M."
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}.sort.bam.log")
     resources:
@@ -111,7 +121,7 @@ rule single_alignment:
 rule ensure_ngmlr_input_extension:
     input: os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}", "{sample}_{tech}_{seq_format}_{chunk_id}")
     output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}_{chunk_id,[a-z]+}.{seq_format}"))
-    shell: "mv {input} {output}"
+    shell: "mv {input} {output} && touch {input}"
 
 
 def get_fastx_files(sample, extension):
