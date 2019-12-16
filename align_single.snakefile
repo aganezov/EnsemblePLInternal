@@ -84,7 +84,7 @@ rule merge_sorted:
     params:
         samtools=samtools_config.get(utils.PATH, "samtools"),
     shell:
-        "{params.samtools} merge {output} {input} &> {log}"
+        "{params.samtools} merge {output} {input.bams} &> {log}"
 
 rule single_sam_to_sort_bam:
     output:temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}_{chunk_id,[a-z]+}.sort.bam"))
