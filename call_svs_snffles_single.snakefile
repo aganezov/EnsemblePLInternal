@@ -4,9 +4,9 @@ configfile: "tools.yaml"
 import os
 import utils
 
-output_dir = config.get(utils.OUTPUT_DIR, ".")
+output_dir = config.get(utils.OUTPUT_DIR, "")
 alignment_output_dir = os.path.join(output_dir, utils.ALIGNMENTS)
-svs_output_dir = os.path.join(output_dir, )
+svs_output_dir = os.path.join(output_dir, "")
 raw_svs_output_dir = os.path.join(output_dir, utils.RAW)
 
 utils.ensure_samples_correctness(config)

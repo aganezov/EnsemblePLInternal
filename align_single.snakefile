@@ -5,7 +5,7 @@ import os
 import utils
 from collections import defaultdict
 
-output_dir = config.get(utils.OUTPUT_DIR, ".")
+output_dir = config.get(utils.OUTPUT_DIR, "")
 alignment_output_dir = os.path.join(output_dir, utils.ALIGNMENTS)
 
 utils.ensure_samples_correctness(config)
