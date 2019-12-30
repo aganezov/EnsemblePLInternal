@@ -43,7 +43,7 @@ rule merged_coverage:
         samtools=samtools_config.get(utils.PATH, "samtools"),
         awk=awk_config.get(utils.PATH, "awk")
     shell:
-        "{params.samtools} depth -a {input} | {params.awk} \'{{sum += $3}} END {{print \"Average coverage (all) = \",sum/NR}}\' > {output} 2> {log}"
+        "{params.samtools} depth -a {input.bam} | {params.awk} \'{{sum += $3}} END {{print \"Average coverage (all) = \",sum/NR}}\' > {output} 2> {log}"
 
 def read_extensions_per_sample(sample, tech):
     result = set()
