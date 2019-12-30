@@ -24,8 +24,18 @@ samples_regex = utils.get_samples_regex(samples_to_reads_paths)
 read_paths_regex = utils.get_reads_paths_regex(samples_to_reads_paths)
 tech_regex = utils.get_tech_regex(config)
 
+def split_fastx_dirs(wildcards):
+    extensions = read_extensions_per_sample(sample=wildcards.sample, tech=wildcards.tech)
+    result = []
+    if "fasta" in extensions:
+        result.append(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fasta"))
+    if "fastq" in extensions:
+        result.append(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fastq"))
+    return result
+
 rule merged_coverage:
-    input: os.path.join(alignment_output_dir, "{sample}_{tech}.sort.bam")
+    input: bam=os.path.join(alignment_output_dir, "{sample}_{tech}.sort.bam"),
+           tmp_fastq_dir=split_fastx_dirs,
     output: os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.coverage.txt")
     message: "Computing average alignment read depth coverage on {input}"
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}.coverage.txt.log")
@@ -34,7 +44,6 @@ rule merged_coverage:
         awk=awk_config.get(utils.PATH, "awk")
     shell:
         "{params.samtools} depth -a {input} | {params.awk} \'{{sum += $3}} END {{print \"Average coverage (all) = \",sum/NR}}\' > {output} 2> {log}"
-
 
 def read_extensions_per_sample(sample, tech):
     result = set()
@@ -50,6 +59,7 @@ def read_extensions_per_sample(sample, tech):
 
 def aggregated_input_for_bam_merging(wildcards):
     extensions = read_extensions_per_sample(sample=wildcards.sample, tech=wildcards.tech)
+    assert "fasta" in extensions or "fastq" in extensions
     result = []
     if "fasta" in extensions:
         chekpoint_output = checkpoints.split_fasta.get(**wildcards).output[0]
@@ -66,42 +76,6 @@ def aggregated_input_for_bam_merging(wildcards):
     print(result)
     return result
 
-def split_fastx_dirs(wildcards):
-    extensions = read_extensions_per_sample(sample=wildcards.sample, tech=wildcards.tech)
-    result = []
-    if "fasta" in extensions:
-        chekpoint_output = checkpoints.split_fasta.get(**wildcards).output[0]
-        result.extend(expand(
-            os.path.join(alignment_output_dir, f"{wildcards.sample}_{wildcards.tech}_fasta_" + "{chunk_id}.sort.bam"),
-            chunk_id=glob_wildcards(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fasta_" + "_{chunk_id}")).chunk_id
-        ))
-    if "fastq" in extensions:
-        chekpoint_output = checkpoints.split_fastq.get(**wildcards).output[0]
-        result.extend(expand(
-            os.path.join(alignment_output_dir, f"{wildcards.sample}_{wildcards.tech}_fastq_" + "{chunk_id}.sort.bam"),
-            chunk_id=glob_wildcards(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fastq_" + "{chunk_id}")).chunk_id
-        ))
-    extensions = read_extensions_per_sample(sample=wildcards.sample, tech=wildcards.tech)
-    result = []
-    if "fasta" in extensions:
-        result.append(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fasta"))
-    if "fastq" in extensions:
-        result.append(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fastq"))
-    return result
-
-
-rule merge_sorted:
-    output: protected(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.sort.bam"))
-    input: bams=aggregated_input_for_bam_merging,
-           tmp_fastq_dir=split_fastx_dirs,
-    message: "Combining sorted bam files. Requested mem {resources.mem_mb}M."
-    log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}.sort.bam.log")
-    resources:
-        mem_mb=lambda wildcards: samtools_config.get(utils.MEM_MB_CORE, 2000) + samtools_config.get(utils.MEM_MB_PER_THREAD, 1000)
-    params:
-        samtools=samtools_config.get(utils.PATH, "samtools"),
-    shell:
-        "{params.samtools} merge {output} {input.bams} &> {log}"
 
 rule single_sam_to_sort_bam:
     output:temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}_{chunk_id,[a-z]+}.sort.bam"))
@@ -180,5 +154,18 @@ checkpoint split_fasta:
 rule samtools_tmp_dir:
     output: temp(directory(os.path.join(config["tools"].get(utils.TMP_DIR, ""), "samtools_tmp_{sample}_{tech}_{seq_format}_{chunk_id}")))
     shell: "mkdir -p {output}"
+
+rule merge_sorted:
+    output: protected(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.sort.bam"))
+    input: bams=aggregated_input_for_bam_merging
+    message: "Combining sorted bam files. Requested mem {resources.mem_mb}M."
+    log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}.sort.bam.log")
+    resources:
+        mem_mb=lambda wildcards: samtools_config.get(utils.MEM_MB_CORE, 2000) + samtools_config.get(utils.MEM_MB_PER_THREAD, 1000)
+    params:
+        samtools=samtools_config.get(utils.PATH, "samtools"),
+    shell:
+        "{params.samtools} merge {output} {input.bams} &> {log}"
+
 
 localrules: ensure_ngmlr_input_extension, samtools_tmp_dir
