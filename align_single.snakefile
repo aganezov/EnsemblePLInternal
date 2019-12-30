@@ -142,7 +142,7 @@ checkpoint split_fastq:
         cut_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, extension=("fastq", "fq"))) == 0 else f"<(cat {' '.join(get_fastx_files(sample=wc.sample, extension=('fastq', 'fq')))})",
         zcat_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, extension=("fastq.gz", "fq.gz"))) == 0 else f"<(zcat {' '.join(get_fastx_files(sample=wc.sample, extension=('fastq.gz', 'fq.gz')))})",
         prefix=lambda wc: os.path.join(alignment_output_dir, f"{wc.sample}_{wc.tech}_fastq", f"{wc.sample}_{wc.tech}_fastq_"),
-        fastq_cnt=lambda wc: config.get(utils.READS_CNT_PER_RUN, 1000000) * 4,
+        fastq_cnt=lambda wc: config.get(utils.READS_CNT_PER_RUN, 500000) * 4,
     shell:
         "mkdir -p {output} && cat {params.cut_command} {params.zcat_command} | split -l {params.fastq_cnt} -a 3 - {params.prefix}"
 
@@ -156,7 +156,7 @@ checkpoint split_fasta:
         cut_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, extension=("fasta", "fa"))) == 0 else "<(cat {fasta})".format(fasta=" ".join(get_fastx_files(sample=wc.sample, extension=("fasta", "fa")))),
         zcat_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, extension=("fasta.gz", "fa.gz"))) == 0 else "<(zcat {fasta_gz})".format(fasta_gz=" ".join(get_fastx_files(sample=wc.sample, extension=("fasta.gz", "fa.gz")))),
         prefix=lambda wc: os.path.join(alignment_output_dir, f"{wc.sample}_{wc.tech}_fasta", f"{wc.sample}_{wc.tech}_fasta_"),
-        fastq_cnt=lambda wc: config.get(utils.READS_CNT_PER_RUN, 1000000) * 2,
+        fastq_cnt=lambda wc: config.get(utils.READS_CNT_PER_RUN, 500000) * 2,
     shell:
         "mkdir -p {output} && cat {params.cut_command} {params.zcat_command} | split -l {params.fasta_cnt} -a 3 - {params.prefix}"
 
