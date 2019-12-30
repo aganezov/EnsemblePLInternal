@@ -55,7 +55,7 @@ NCPUS = "nCPUs"
 
 
 def ensure_samples_correctness(config):
-    if SAMPLES not in config or not isinstance(config[SAMPLES], dict) or len(config[SAMPLES]) < 1:
+    if SAMPLES not in config or not isinstance(config[SAMPLES], (dict, list)) or len(config[SAMPLES]) < 1:
         raise ValueError("Configuration data.yaml file is missing information about samples or the setup is not dictionary-like")
 
 
