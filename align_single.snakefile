@@ -38,11 +38,13 @@ rule merged_coverage:
 
 def read_extensions_per_sample(sample, tech):
     result = set()
+    print(samples_to_reads_paths[(sample, tech.upper())])
     for read_path in samples_to_reads_paths[(sample, tech.upper())]:
         if read_path.endswith(("fastq", "fq", "fastq.gz", "fq.gz")):
             result.add("fastq")
         elif read_path.endswith(("fasta", "fa", "fasta.gz", "fa.gz")):
             result.add("fasta")
+    print(result)
     return sorted(result)
 
 
