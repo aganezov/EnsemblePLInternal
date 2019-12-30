@@ -29,5 +29,5 @@ for sample in sample_to_reads_paths.keys():
 rule main:
     input: overall_expected_files
 
-include: "call_svs_snffles_single.snakefile"
+include: "call_svs_sniffles_single.snakefile"
 include: "align_single.snakefile"
