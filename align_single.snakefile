@@ -63,6 +63,7 @@ def aggregated_input_for_bam_merging(wildcards):
             os.path.join(alignment_output_dir, f"{wildcards.sample}_{wildcards.tech}_fastq_" + "{chunk_id}.sort.bam"),
             chunk_id=glob_wildcards(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fastq_" + "{chunk_id}")).chunk_id
         ))
+    print(result)
     return result
 
 def split_fastx_dirs(wildcards):
