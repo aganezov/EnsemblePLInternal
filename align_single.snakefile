@@ -70,6 +70,20 @@ def split_fastx_dirs(wildcards):
     extensions = read_extensions_per_sample(sample=wildcards.sample, tech=wildcards.tech)
     result = []
     if "fasta" in extensions:
+        chekpoint_output = checkpoints.split_fasta.get(**wildcards).output[0]
+        result.extend(expand(
+            os.path.join(alignment_output_dir, f"{wildcards.sample}_{wildcards.tech}_fasta_" + "{chunk_id}.sort.bam"),
+            chunk_id=glob_wildcards(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fasta_" + "_{chunk_id}")).chunk_id
+        ))
+    if "fastq" in extensions:
+        chekpoint_output = checkpoints.split_fastq.get(**wildcards).output[0]
+        result.extend(expand(
+            os.path.join(alignment_output_dir, f"{wildcards.sample}_{wildcards.tech}_fastq_" + "{chunk_id}.sort.bam"),
+            chunk_id=glob_wildcards(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fastq_" + "{chunk_id}")).chunk_id
+        ))
+    extensions = read_extensions_per_sample(sample=wildcards.sample, tech=wildcards.tech)
+    result = []
+    if "fasta" in extensions:
         result.append(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fasta"))
     if "fastq" in extensions:
         result.append(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fastq"))
@@ -137,7 +151,7 @@ def get_fastx_files(sample, tech, extension):
 
 checkpoint split_fastq:
     output:
-        temp(directory(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fastq")))
+        directory(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fastq"))
     input:
         fastq=lambda wc: get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fastq", "fq")),
         fastq_gz=lambda wc: get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fastq.gz", "fa.gz")),
@@ -151,7 +165,7 @@ checkpoint split_fastq:
 
 checkpoint split_fasta:
     output:
-        temp(directory(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fasta")))
+        directory(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fasta"))
     input:
         fasta=lambda wc: get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta", "fa")),
         fasta_gz=lambda wc: get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta.gz", "fa.gz")),
