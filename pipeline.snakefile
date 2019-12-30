@@ -17,7 +17,7 @@ utils.ensure_enabled_sv_tools(config)
 
 # during development this thing guarantees that only the latest supported part of pipeline produces results
 overall_expected_files = []
-print(sample_to_reads_paths)
+# print(sample_to_reads_paths)
 for (sample, tech) in sample_to_reads_paths.keys():
     for sv_tool in config[utils.SV_TOOLS_ENABLED]:
         if sv_tool == "sniffles":
