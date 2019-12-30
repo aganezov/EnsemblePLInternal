@@ -156,7 +156,7 @@ checkpoint split_fasta:
         cut_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, extension=("fasta", "fa"))) == 0 else "<(cat {fasta})".format(fasta=" ".join(get_fastx_files(sample=wc.sample, extension=("fasta", "fa")))),
         zcat_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, extension=("fasta.gz", "fa.gz"))) == 0 else "<(zcat {fasta_gz})".format(fasta_gz=" ".join(get_fastx_files(sample=wc.sample, extension=("fasta.gz", "fa.gz")))),
         prefix=lambda wc: os.path.join(alignment_output_dir, f"{wc.sample}_{wc.tech}_fasta", f"{wc.sample}_{wc.tech}_fasta_"),
-        fastq_cnt=lambda wc: config.get(utils.READS_CNT_PER_RUN, 500000) * 2,
+        fasta_cnt=lambda wc: config.get(utils.READS_CNT_PER_RUN, 500000) * 2,
     shell:
         "mkdir -p {output} && cat {params.cut_command} {params.zcat_command} | split -l {params.fasta_cnt} -a 3 - {params.prefix}"
 
