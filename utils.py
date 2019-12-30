@@ -65,23 +65,24 @@ def get_samples_to_reads_paths(config):
         if READS_PATHS not in sample_data or not isinstance(sample_data[READS_PATHS], list) or len(sample_data[READS_PATHS]) < 1:
             raise ValueError(
                 f"Error when parsing reads paths for sample {sample_name} sample. Make sure the entries are formatted as a list of strings under the {READS_PATHS} key")
-        for read_path in sample_data[READS_PATHS]:
-            if not read_path.endswith(("fastq", "fq", "fastq.gz", "fq.gz", "fasta", "fasta.gz", "fa", "fa.gz")):
-                raise ValueError(f"Unsupported input format for read path {read_path}. Only 'fastq', 'fq', 'fastq.gz', 'fq.gz', 'fasta', 'fasta.gz', 'fa', and 'fa.gz' are supported")
-            samples_to_reads_paths[sample_name].append(read_path)
         if TECH not in sample_data or sample_data[TECH].lower() not in ["ont", "pb", "pacbio", "pbccs", "pacbioccs"]:
             raise ValueError(
                 f"incorrect or missing tech {sample_data[TECH]} specified for sample {sample_name} in data.yaml. Only ONT or PB are supported, and tech specification is required")
+        tech = sample_data[TECH].upper()
+        for read_path in sample_data[READS_PATHS]:
+            if not read_path.endswith(("fastq", "fq", "fastq.gz", "fq.gz", "fasta", "fasta.gz", "fa", "fa.gz")):
+                raise ValueError(f"Unsupported input format for read path {read_path}. Only 'fastq', 'fq', 'fastq.gz', 'fq.gz', 'fasta', 'fasta.gz', 'fa', and 'fa.gz' are supported")
+            samples_to_reads_paths[(sample_name, tech)].append(read_path)
     return samples_to_reads_paths
 
 
 def get_samples_regex(samples_to_reads_paths):
-    return f"({'|'.join(samples_to_reads_paths.keys())})"
+    return f"({'|'.join(x[0] for x in samples_to_reads_paths.keys())})"
 
 
 def get_reads_paths_regex(samples_to_reads_paths):
     bases = set()
-    for sample_name, reads_paths in samples_to_reads_paths.items():
+    for (sample_name, tech), reads_paths in samples_to_reads_paths.items():
         for read_path in reads_paths:
             bases.add(os.path.basename(read_path))
     return f"({'|'.join(bases)})"

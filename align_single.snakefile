@@ -11,9 +11,9 @@ alignment_output_dir = os.path.join(output_dir, utils.ALIGNMENTS)
 utils.ensure_samples_correctness(config)
 samples_to_reads_paths = utils.get_samples_to_reads_paths(config)
 samples_to_basename_readpaths = defaultdict(dict)
-for sample_name, read_paths in samples_to_reads_paths.items():
+for (sample_name, tech), read_paths in samples_to_reads_paths.items():
     for read_path in read_paths:
-        samples_to_basename_readpaths[sample_name][os.path.basename(read_path)] = read_path
+        samples_to_basename_readpaths[(sample_name, tech.upper())][os.path.basename(read_path)] = read_path
 utils.ensure_ref_correctness(config)
 
 ngmlr_config = config.get(utils.TOOLS, {}).get(utils.NGMLR, {})
@@ -36,9 +36,9 @@ rule merged_coverage:
         "{params.samtools} depth -a {input} | {params.awk} \'{{sum += $3}} END {{print \"Average coverage (all) = \",sum/NR}}\' > {output} 2> {log}"
 
 
-def read_extensions_per_sample(sample):
+def read_extensions_per_sample(sample, tech):
     result = set()
-    for read_path in samples_to_reads_paths[sample]:
+    for read_path in samples_to_reads_paths[(sample, tech.upper())]:
         if read_path.endswith(("fastq", "fq", "fastq.gz", "fq.gz")):
             result.add("fastq")
         elif read_path.endswith(("fasta", "fa", "fasta.gz", "fa.gz")):
@@ -47,7 +47,7 @@ def read_extensions_per_sample(sample):
 
 
 def aggregated_input_for_bam_merging(wildcards):
-    extensions = read_extensions_per_sample(sample=wildcards.sample)
+    extensions = read_extensions_per_sample(sample=wildcards.sample, tech=wildcards.tech)
     result = []
     if "fasta" in extensions:
         chekpoint_output = checkpoints.split_fasta.get(**wildcards).output[0]
@@ -64,7 +64,7 @@ def aggregated_input_for_bam_merging(wildcards):
     return result
 
 def split_fastx_dirs(wildcards):
-    extensions = read_extensions_per_sample(sample=wildcards.sample)
+    extensions = read_extensions_per_sample(sample=wildcards.sample, tech=wildcards.tech)
     result = []
     if "fasta" in extensions:
         result.append(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fasta"))
@@ -124,9 +124,9 @@ rule ensure_ngmlr_input_extension:
     shell: "mv {input} {output} && touch {input}"
 
 
-def get_fastx_files(sample, extension):
+def get_fastx_files(sample, tech, extension):
     result = []
-    for read_path in samples_to_reads_paths[sample]:
+    for read_path in samples_to_reads_paths[(sample, tech.upper())]:
         if read_path.endswith(extension):
             result.append(read_path)
     return result
@@ -136,11 +136,11 @@ checkpoint split_fastq:
     output:
         temp(directory(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fastq")))
     input:
-        fastq=lambda wc: get_fastx_files(sample=wc.sample, extension=("fastq", "fq")),
-        fastq_gz=lambda wc: get_fastx_files(sample=wc.sample, extension=("fastq.gz", "fa.gz")),
+        fastq=lambda wc: get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fastq", "fq")),
+        fastq_gz=lambda wc: get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fastq.gz", "fa.gz")),
     params:
-        cut_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, extension=("fastq", "fq"))) == 0 else f"<(cat {' '.join(get_fastx_files(sample=wc.sample, extension=('fastq', 'fq')))})",
-        zcat_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, extension=("fastq.gz", "fq.gz"))) == 0 else f"<(zcat {' '.join(get_fastx_files(sample=wc.sample, extension=('fastq.gz', 'fq.gz')))})",
+        cut_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fastq", "fq"))) == 0 else f"<(cat {' '.join(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=('fastq', 'fq')))})",
+        zcat_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fastq.gz", "fq.gz"))) == 0 else f"<(zcat {' '.join(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=('fastq.gz', 'fq.gz')))})",
         prefix=lambda wc: os.path.join(alignment_output_dir, f"{wc.sample}_{wc.tech}_fastq", f"{wc.sample}_{wc.tech}_fastq_"),
         fastq_cnt=lambda wc: config.get(utils.READS_CNT_PER_RUN, 500000) * 4,
     shell:
@@ -150,11 +150,11 @@ checkpoint split_fasta:
     output:
         temp(directory(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fasta")))
     input:
-        fasta=lambda wc: get_fastx_files(sample=wc.sample, extension=("fasta", "fa")),
-        fasta_gz=lambda wc: get_fastx_files(sample=wc.sample, extension=("fasta.gz", "fa.gz")),
+        fasta=lambda wc: get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta", "fa")),
+        fasta_gz=lambda wc: get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta.gz", "fa.gz")),
     params:
-        cut_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, extension=("fasta", "fa"))) == 0 else "<(cat {fasta})".format(fasta=" ".join(get_fastx_files(sample=wc.sample, extension=("fasta", "fa")))),
-        zcat_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, extension=("fasta.gz", "fa.gz"))) == 0 else "<(zcat {fasta_gz})".format(fasta_gz=" ".join(get_fastx_files(sample=wc.sample, extension=("fasta.gz", "fa.gz")))),
+        cut_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta", "fa"))) == 0 else "<(cat {fasta})".format(fasta=" ".join(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta", "fa")))),
+        zcat_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta.gz", "fa.gz"))) == 0 else "<(zcat {fasta_gz})".format(fasta_gz=" ".join(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta.gz", "fa.gz")))),
         prefix=lambda wc: os.path.join(alignment_output_dir, f"{wc.sample}_{wc.tech}_fasta", f"{wc.sample}_{wc.tech}_fasta_"),
         fasta_cnt=lambda wc: config.get(utils.READS_CNT_PER_RUN, 500000) * 2,
     shell:
