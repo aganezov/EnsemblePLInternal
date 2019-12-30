@@ -22,6 +22,14 @@ READS_CNT_PER_RUN = "reads_cnt_per_run"
 
 
 RAW = "raw"
+REFINED = "refined"
+INS_TO_DUP = "ins_to_dup"
+IRIS_REFINED = "iris_refined"
+SPECIFIC_MARKED = "specific_marked"
+SPEC_READS_FIXED = "spec_reads_fixed"
+SPEC_READS_FRACTION = "spec_reads_fraction"
+SPEC_LEN = "spec_len"
+MAX_DUP_LENGTH = "max_dup_length"
 
 SNIFFLES = "sniffles"
 MIN_SUPPORT = "min_support"
@@ -32,6 +40,13 @@ NUM_READS_REPORT = "num_reads_report"
 MIN_SEQ_SIZE = "min_seq_size"
 
 SV_TOOLS_ENABLED = "sv_tools_enabled"
+
+JAVA = "java"
+JASMINE = "jasmine"
+IRIS = "iris"
+SRC_PATH = "src_path"
+MINIMAP2 = "minimap2"
+RACON = "racon"
 
 MEM_MB_PER_THREAD = "mem_mb_per_thread"
 MEM_MB_CORE = "mem_mb_core"
@@ -54,7 +69,7 @@ def get_samples_to_reads_paths(config):
             if not read_path.endswith(("fastq", "fq", "fastq.gz", "fq.gz", "fasta", "fasta.gz", "fa", "fa.gz")):
                 raise ValueError(f"Unsupported input format for read path {read_path}. Only 'fastq', 'fq', 'fastq.gz', 'fq.gz', 'fasta', 'fasta.gz', 'fa', and 'fa.gz' are supported")
             samples_to_reads_paths[sample_name].append(read_path)
-        if TECH not in sample_data or sample_data[TECH].lower() not in ["ont", "pb", "pacbio"]:
+        if TECH not in sample_data or sample_data[TECH].lower() not in ["ont", "pb", "pacbio", "pbccs", "pacbioccs"]:
             raise ValueError(
                 f"incorrect or missing tech {sample_data[TECH]} specified for sample {sample_name} in data.yaml. Only ONT or PB are supported, and tech specification is required")
     return samples_to_reads_paths

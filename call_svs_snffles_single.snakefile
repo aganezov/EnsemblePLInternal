@@ -34,8 +34,10 @@ rule sensitive_svs_sniffles:
         max_num_splits = sniffles_config.get(utils.MAX_NUM_SPLIT_READS, 10),
         max_distance = sniffles_config.get(utils.MAX_DISTANCE, 1000),
         num_reads_report = sniffles_config.get(utils.NUM_READS_REPORT, -1),
-        min_seq_size = sniffles_config.get(utils.MIN_SEQ_SIZE, 1000)
+        min_seq_size = sniffles_config.get(utils.MIN_SEQ_SIZE, 1000),
+        ccs_flag = lambda wc: "--ccs_reads" if wc.tech.lower() in ["pacbioccs", "pbccs"] else "",
     shell:
-        "{params.sniffles} -m {input} -v {output} --threads {threads} --min_support {params.min_support} --max_distance {params.max_distance} --max_num_splits {params.max_num_splits} --min_length {params.min_length} --num_reads_report {params.num_reads_report} --min_seq_size {params.min_seq_size} &> {log}"
+        "{params.sniffles} -m {input} -v {output} --threads {threads} --min_support {params.min_support} --max_distance {params.max_distance} --max_num_splits {params.max_num_splits} "
+        "--min_length {params.min_length} --num_reads_report {params.num_reads_report} --min_seq_size {params.min_seq_size} {params.ccs_flag} &> {log}"
 
 include: "align_single.snakefile"
