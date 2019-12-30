@@ -55,13 +55,14 @@ NCPUS = "nCPUs"
 
 
 def ensure_samples_correctness(config):
-    if SAMPLES not in config or not isinstance(config[SAMPLES], (dict, list)) or len(config[SAMPLES]) < 1:
+    if SAMPLES not in config or not isinstance(config[SAMPLES], list) or len(config[SAMPLES]) < 1:
         raise ValueError("Configuration data.yaml file is missing information about samples or the setup is not dictionary-like")
 
 
 def get_samples_to_reads_paths(config):
     samples_to_reads_paths = defaultdict(list)
-    for sample_name, sample_data in config["samples"].items():
+    for sample_data in config["samples"]:
+        sample_name = sample_data["sample"]
         if READS_PATHS not in sample_data or not isinstance(sample_data[READS_PATHS], list) or len(sample_data[READS_PATHS]) < 1:
             raise ValueError(
                 f"Error when parsing reads paths for sample {sample_name} sample. Make sure the entries are formatted as a list of strings under the {READS_PATHS} key")
@@ -90,7 +91,7 @@ def get_reads_paths_regex(samples_to_reads_paths):
 
 def get_tech_regex(config):
     techs = set()
-    for sample_name, sample_data in config[SAMPLES].items():
+    for sample_data in config[SAMPLES]:
         techs.add(sample_data[TECH])
     return f"({'|'.join(techs)})"
 
