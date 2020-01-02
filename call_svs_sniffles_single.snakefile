@@ -4,10 +4,10 @@ configfile: "tools.yaml"
 import os
 import utils
 
-output_dir = config.get(utils.OUTPUT_DIR, ".")
+output_dir = config.get(utils.OUTPUT_DIR, "")
 alignment_output_dir = os.path.join(output_dir, utils.ALIGNMENTS)
-svs_output_dir = os.path.join(output_dir, )
-raw_svs_output_dir = os.path.join(output_dir, utils.RAW)
+svs_output_dir = os.path.join(output_dir, utils.SVS)
+raw_svs_output_dir = os.path.join(svs_output_dir, utils.RAW)
 
 utils.ensure_samples_correctness(config)
 sample_to_reads_paths = utils.get_samples_to_reads_paths(config)

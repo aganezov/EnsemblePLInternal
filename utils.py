@@ -22,6 +22,7 @@ READS_CNT_PER_RUN = "reads_cnt_per_run"
 
 
 RAW = "raw"
+SVS = "svs"
 REFINED = "refined"
 INS_TO_DUP = "ins_to_dup"
 IRIS_REFINED = "iris_refined"
