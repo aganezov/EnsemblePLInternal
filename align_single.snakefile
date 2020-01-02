@@ -11,9 +11,9 @@ alignment_output_dir = os.path.join(output_dir, utils.ALIGNMENTS)
 utils.ensure_samples_correctness(config)
 samples_to_reads_paths = utils.get_samples_to_reads_paths(config)
 samples_to_basename_readpaths = defaultdict(dict)
-for sample_name, read_paths in samples_to_reads_paths.items():
+for (sample_name, tech), read_paths in samples_to_reads_paths.items():
     for read_path in read_paths:
-        samples_to_basename_readpaths[sample_name][os.path.basename(read_path)] = read_path
+        samples_to_basename_readpaths[(sample_name, tech.upper())][os.path.basename(read_path)] = read_path
 utils.ensure_ref_correctness(config)
 
 ngmlr_config = config.get(utils.TOOLS, {}).get(utils.NGMLR, {})
@@ -24,47 +24,8 @@ samples_regex = utils.get_samples_regex(samples_to_reads_paths)
 read_paths_regex = utils.get_reads_paths_regex(samples_to_reads_paths)
 tech_regex = utils.get_tech_regex(config)
 
-rule merged_coverage:
-    input: os.path.join(alignment_output_dir, "{sample}_{tech}.sort.bam")
-    output: os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.coverage.txt")
-    message: "Computing average alignment read depth coverage on {input}"
-    log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}.coverage.txt.log")
-    params:
-        samtools=samtools_config.get(utils.PATH, "samtools"),
-        awk=awk_config.get(utils.PATH, "awk")
-    shell:
-        "{params.samtools} depth -a {input} | {params.awk} \'{{sum += $3}} END {{print \"Average coverage (all) = \",sum/NR}}\' > {output} 2> {log}"
-
-
-def read_extensions_per_sample(sample):
-    result = set()
-    for read_path in samples_to_reads_paths[sample]:
-        if read_path.endswith(("fastq", "fq", "fastq.gz", "fq.gz")):
-            result.add("fastq")
-        elif read_path.endswith(("fasta", "fa", "fasta.gz", "fa.gz")):
-            result.add("fasta")
-    return sorted(result)
-
-
-def aggregated_input_for_bam_merging(wildcards):
-    extensions = read_extensions_per_sample(sample=wildcards.sample)
-    result = []
-    if "fasta" in extensions:
-        chekpoint_output = checkpoints.split_fasta.get(**wildcards).output[0]
-        result.extend(expand(
-            os.path.join(alignment_output_dir, f"{wildcards.sample}_{wildcards.tech}_fasta_" + "{chunk_id}.sort.bam"),
-            chunk_id=glob_wildcards(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fasta_" + "_{chunk_id}")).chunk_id
-        ))
-    if "fastq" in extensions:
-        chekpoint_output = checkpoints.split_fastq.get(**wildcards).output[0]
-        result.extend(expand(
-            os.path.join(alignment_output_dir, f"{wildcards.sample}_{wildcards.tech}_fastq_" + "{chunk_id}.sort.bam"),
-            chunk_id=glob_wildcards(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fastq_" + "{chunk_id}")).chunk_id
-        ))
-    return result
-
 def split_fastx_dirs(wildcards):
-    extensions = read_extensions_per_sample(sample=wildcards.sample)
+    extensions = read_extensions_per_sample(sample=wildcards.sample, tech=wildcards.tech)
     result = []
     if "fasta" in extensions:
         result.append(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fasta"))
@@ -72,19 +33,57 @@ def split_fastx_dirs(wildcards):
         result.append(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fastq"))
     return result
 
-
-rule merge_sorted:
-    output: protected(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.sort.bam"))
-    input: bams=aggregated_input_for_bam_merging,
+rule merged_coverage:
+    input: bam=os.path.join(alignment_output_dir, "{sample}_{tech}.sort.bam"),
            tmp_fastq_dir=split_fastx_dirs,
-    message: "Combining sorted bam files. Requested mem {resources.mem_mb}M."
-    log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}.sort.bam.log")
-    resources:
-        mem_mb=lambda wildcards: samtools_config.get(utils.MEM_MB_CORE, 2000) + samtools_config.get(utils.MEM_MB_PER_THREAD, 1000)
+    output: os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.coverage.txt")
+    message: "Computing average alignment read depth coverage on {input}"
+    log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}.coverage.txt.log")
     params:
         samtools=samtools_config.get(utils.PATH, "samtools"),
+        awk=awk_config.get(utils.PATH, "awk")
     shell:
-        "{params.samtools} merge {output} {input.bams} &> {log}"
+        "{params.samtools} depth -a {input.bam} | {params.awk} \'{{sum += $3}} END {{print \"Average coverage (all) = \",sum/NR}}\' > {output} 2> {log}"
+
+def read_extensions_per_sample(sample, tech):
+    result = set()
+    # print(samples_to_reads_paths[(sample, tech.upper())])
+    for read_path in samples_to_reads_paths[(sample, tech.upper())]:
+        if read_path.endswith(("fastq", "fq", "fastq.gz", "fq.gz")):
+            result.add("fastq")
+        elif read_path.endswith(("fasta", "fa", "fasta.gz", "fa.gz")):
+            result.add("fasta")
+    # print(result)
+    return sorted(result)
+
+
+def aggregated_input_for_bam_merging(wildcards):
+    extensions = read_extensions_per_sample(sample=wildcards.sample, tech=wildcards.tech)
+    assert "fasta" in extensions or "fastq" in extensions
+    result = []
+    if "fasta" in extensions:
+        # print("fasta")
+        chekpoint_output = checkpoints.split_fasta.get(**wildcards).output[0]
+        # print(f"checkpoint output {chekpoint_output}")
+        # print(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fasta_" + "_{chunk_id}"))
+        # print(glob_wildcards(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fasta_" + "{chunk_id}")))
+        # print(glob_wildcards(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fasta_" + "{chunk_id}")).chunk_id)
+        result.extend(expand(
+            os.path.join(alignment_output_dir, f"{wildcards.sample}_{wildcards.tech}_fasta_" + "{chunk_id}.sort.bam"),
+            chunk_id=glob_wildcards(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fasta_" + "{chunk_id}")).chunk_id
+        ))
+    if "fastq" in extensions:
+        # print("fastq")
+        chekpoint_output = checkpoints.split_fastq.get(**wildcards).output[0]
+        # print(f"checkpoint output {chekpoint_output}")
+        # print(glob_wildcards(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fastq_" + "{chunk_id}")).chunk_id)
+        result.extend(expand(
+            os.path.join(alignment_output_dir, f"{wildcards.sample}_{wildcards.tech}_fastq_" + "{chunk_id}.sort.bam"),
+            chunk_id=glob_wildcards(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fastq_" + "{chunk_id}")).chunk_id
+        ))
+    # print(f"result {result}")
+    return result
+
 
 rule single_sam_to_sort_bam:
     output:temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}_{chunk_id,[a-z]+}.sort.bam"))
@@ -124,9 +123,9 @@ rule ensure_ngmlr_input_extension:
     shell: "mv {input} {output} && touch {input}"
 
 
-def get_fastx_files(sample, extension):
+def get_fastx_files(sample, tech, extension):
     result = []
-    for read_path in samples_to_reads_paths[sample]:
+    for read_path in samples_to_reads_paths[(sample, tech.upper())]:
         if read_path.endswith(extension):
             result.append(read_path)
     return result
@@ -134,34 +133,47 @@ def get_fastx_files(sample, extension):
 
 checkpoint split_fastq:
     output:
-        temp(directory(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fastq")))
+        directory(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fastq"))
     input:
-        fastq=lambda wc: get_fastx_files(sample=wc.sample, extension=("fastq", "fq")),
-        fastq_gz=lambda wc: get_fastx_files(sample=wc.sample, extension=("fastq.gz", "fa.gz")),
+        fastq=lambda wc: get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fastq", "fq")),
+        fastq_gz=lambda wc: get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fastq.gz", "fa.gz")),
     params:
-        cut_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, extension=("fastq", "fq"))) == 0 else f"<(cat {' '.join(get_fastx_files(sample=wc.sample, extension=('fastq', 'fq')))})",
-        zcat_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, extension=("fastq.gz", "fq.gz"))) == 0 else f"<(zcat {' '.join(get_fastx_files(sample=wc.sample, extension=('fastq.gz', 'fq.gz')))})",
+        cut_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fastq", "fq"))) == 0 else f"<(cat {' '.join(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=('fastq', 'fq')))})",
+        zcat_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fastq.gz", "fq.gz"))) == 0 else f"<(zcat {' '.join(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=('fastq.gz', 'fq.gz')))})",
         prefix=lambda wc: os.path.join(alignment_output_dir, f"{wc.sample}_{wc.tech}_fastq", f"{wc.sample}_{wc.tech}_fastq_"),
-        fastq_cnt=lambda wc: config.get(utils.READS_CNT_PER_RUN, 1000000) * 4,
+        fastq_cnt=lambda wc: config.get(utils.READS_CNT_PER_RUN, 500000) * 4,
     shell:
         "mkdir -p {output} && cat {params.cut_command} {params.zcat_command} | split -l {params.fastq_cnt} -a 3 - {params.prefix}"
 
 checkpoint split_fasta:
     output:
-        temp(directory(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fasta")))
+        directory(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fasta"))
     input:
-        fasta=lambda wc: get_fastx_files(sample=wc.sample, extension=("fasta", "fa")),
-        fasta_gz=lambda wc: get_fastx_files(sample=wc.sample, extension=("fasta.gz", "fa.gz")),
+        fasta=lambda wc: get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta", "fa")),
+        fasta_gz=lambda wc: get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta.gz", "fa.gz")),
     params:
-        cut_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, extension=("fasta", "fa"))) == 0 else "<(cat {fasta})".format(fasta=" ".join(get_fastx_files(sample=wc.sample, extension=("fasta", "fa")))),
-        zcat_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, extension=("fasta.gz", "fa.gz"))) == 0 else "<(zcat {fasta_gz})".format(fasta_gz=" ".join(get_fastx_files(sample=wc.sample, extension=("fasta.gz", "fa.gz")))),
+        cut_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta", "fa"))) == 0 else "<(cat {fasta})".format(fasta=" ".join(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta", "fa")))),
+        zcat_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta.gz", "fa.gz"))) == 0 else "<(zcat {fasta_gz})".format(fasta_gz=" ".join(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta.gz", "fa.gz")))),
         prefix=lambda wc: os.path.join(alignment_output_dir, f"{wc.sample}_{wc.tech}_fasta", f"{wc.sample}_{wc.tech}_fasta_"),
-        fastq_cnt=lambda wc: config.get(utils.READS_CNT_PER_RUN, 1000000) * 2,
+        fasta_cnt=lambda wc: config.get(utils.READS_CNT_PER_RUN, 500000) * 2,
     shell:
         "mkdir -p {output} && cat {params.cut_command} {params.zcat_command} | split -l {params.fasta_cnt} -a 3 - {params.prefix}"
 
 rule samtools_tmp_dir:
     output: temp(directory(os.path.join(config["tools"].get(utils.TMP_DIR, ""), "samtools_tmp_{sample}_{tech}_{seq_format}_{chunk_id}")))
     shell: "mkdir -p {output}"
+
+rule merge_sorted:
+    output: protected(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.sort.bam"))
+    input: bams=aggregated_input_for_bam_merging
+    message: "Combining sorted bam files. Requested mem {resources.mem_mb}M."
+    log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}.sort.bam.log")
+    resources:
+        mem_mb=lambda wildcards: samtools_config.get(utils.MEM_MB_CORE, 2000) + samtools_config.get(utils.MEM_MB_PER_THREAD, 1000)
+    params:
+        samtools=samtools_config.get(utils.PATH, "samtools"),
+    shell:
+        "{params.samtools} merge {output} {input.bams} &> {log}"
+
 
 localrules: ensure_ngmlr_input_extension, samtools_tmp_dir

@@ -9,7 +9,7 @@ tools:
     mem_mb_per_thread: 1000
     mem_mb_core: 2000
   ngmlr:
-    reads_cnt_per_run: 1000000
+    reads_cnt_per_run: 500000
     path: "ngmlr"
     threads: 100
     time: "72:0:0"
@@ -27,3 +27,26 @@ tools:
     time: "24:0:0"
     mem_mb_per_thread: 1000
     mem_mb_core: 10000
+  java:
+    path: "java"
+  jasmine:
+    src_path: ""
+    threads: 2
+    mem_mb_core: 4000
+    mem_mb_per_thread: 4000
+    ins_to_dup:
+      max_dup_length: 10000
+    specific_marked:
+      spec_reads_fixed: 10
+      spec_reads_fraction: 0.25
+      spec_len: 30
+  iris:
+    src_path: ""
+    threads: 100
+    mem_mb_core: 4000
+    mem_mb_per_thread: 1000
+  minimap2:
+    path: "minimap2"
+  racon:
+    path: "racon"
+
