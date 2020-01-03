@@ -108,6 +108,7 @@ rule refined_sensitive_new_sv_types:
         mem_mb=lambda wildcards, threads: iris_config.get(utils.MEM_MB_CORE, 4000) + iris_config.get(utils.MEM_MB_PER_THREAD, 1000) * threads
     params:
         output_dir=lambda wc: os.path.join(iris_refined_output_dir, wc.sample + "_" + wc.tech + "_sniffles"),
+        iris_output_dir=lambda wc: os.path.join(iris_refined_output_dir, wc.sample + "_" + wc.tech + "_sniffles", "iris"),
         samtools=samtools_config.get(utils.PATH, "samtools"),
         ref_genome=config[utils.REFERENCE],
         java_src=":".join(x for x in [jasmine_config.get(utils.SRC_PATH, ""), iris_config.get(utils.SRC_PATH, "")] if len(x) > 0),
@@ -115,8 +116,8 @@ rule refined_sensitive_new_sv_types:
         minimap2=minimap2_config.get(utils.PATH, "minimap2"),
         racon=racon_config.get(utils.PATH, "racon"),
     shell:
-        "{params.java} -cp {params.java_src} Main file_list={input.vcf_file_list} --run_iris --preprocess_only genome_file={params.ref_genome} bam_list={input.bam_file_list} threads={threads} "
-        "--iris_args=minimap_path={params.minimap2},racon_path={params.racon} out_dir={params.output_dir} out_file=test.vcf &> {log}"
+        "{params.java} -cp {params.java_src} Main file_list={input.vcf_file_list} --run_iris --preprocess_only genome_file={params.ref_genome} bam_list={input.bam_file_list} "
+        "--iris_args=minimap_path={params.minimap2},racon_path={params.racon},samtools_path={params.samtools},threads={threads},out_dir={params.iris_output_dir} out_dir={params.output_dir} out_file=test.vcf &> {log}"
 
 
 rule create_bam_file_list:
