@@ -6,7 +6,7 @@ import utils
 
 output_dir = config.get(utils.OUTPUT_DIR, ".")
 alignment_output_dir = os.path.join(output_dir, utils.ALIGNMENTS)
-svs_output_dir = os.path.join(output_dir, )
+svs_output_dir = os.path.join(output_dir, utils.SVS)
 raw_svs_output_dir = os.path.join(svs_output_dir, utils.RAW)
 refined_svs_output_dir = os.path.join(svs_output_dir, utils.REFINED)
 ins_to_dup_output_dir = os.path.join(refined_svs_output_dir, utils.INS_TO_DUP)
