@@ -48,6 +48,7 @@ IRIS = "iris"
 SRC_PATH = "src_path"
 MINIMAP2 = "minimap2"
 RACON = "racon"
+SCRIPT_NAME = "script_name"
 
 MEM_MB_PER_THREAD = "mem_mb_per_thread"
 MEM_MB_CORE = "mem_mb_core"
