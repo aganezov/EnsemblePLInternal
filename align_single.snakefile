@@ -84,7 +84,6 @@ def aggregated_input_for_bam_merging(wildcards):
     # print(f"result {result}")
     return result
 
-
 rule single_sam_to_sort_bam:
     output:temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}_{chunk_id,[a-z]+}.sort.bam"))
     input:
@@ -162,6 +161,17 @@ checkpoint split_fasta:
 rule samtools_tmp_dir:
     output: temp(directory(os.path.join(config["tools"].get(utils.TMP_DIR, ""), "samtools_tmp_{sample}_{tech}_{seq_format}_{chunk_id}")))
     shell: "mkdir -p {output}"
+
+rule index_bam:
+    input: os.path.join(alignment_output_dir, "{sample}_{tech}.sort.bam")
+    output: protected(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.sort.bam.bai"))
+    log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}.sort.bam.bai.log")
+    resources:
+        mem_mb=lambda wildcards: samtools_config.get(utils.MEM_MB_CORE, 2000) + samtools_config.get(utils.MEM_MB_PER_THREAD, 1000)
+    params:
+        samtools=samtools_config.get(utils.PATH, "samtools"),
+    shell:
+        "{params.samtools} index {input}"
 
 rule merge_sorted:
     output: protected(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.sort.bam"))
