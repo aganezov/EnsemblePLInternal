@@ -143,7 +143,7 @@ rule sensitive_ins_to_dup_conversion:
          "--preprocess_only out_dir={params.output_dir} threads={threads} samtools_path={params.samtools} max_dup_length={params.max_dup_length} out_file=test.vcf"
 
 rule create_first_vcf_file_list:
-    output: temp(os.path.join(refined_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}", "vcf_list.txt"))
+    output: temp(os.path.join(refined_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles", "vcf_list.txt"))
     input: os.path.join(raw_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".vcf")
     run:
         with open(output[0], "wt") as dest:
