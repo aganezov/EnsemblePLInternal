@@ -30,8 +30,8 @@ for (sample, tech) in sample_to_reads_paths.keys():
             suffix = ""
         # overall_expected_files.append(os.path.join(alignment_output_dir, f"{sample}_{tech}.coverage.txt"))
         # overall_expected_files.append(os.path.join(raw_svs_output_dir, f"{sample}_{tech}_{sv_tool}.{suffix}vcf"))
-        overall_expected_files.append(os.path.join(refined_svs_output_dir, f"{sample}_{tech}_{sv_tool}.{suffix}.refined.nSVtypes.specific.vcf"))
-        overall_expected_files.append(os.path.join(refined_svs_output_dir, f"{sample}_{tech}_{sv_tool}.{suffix}.refined.specific.vcf"))
+        overall_expected_files.append(os.path.join(refined_svs_output_dir, f"{sample}_{tech}_{sv_tool}.{suffix}refined.nSVtypes.specific.vcf"))
+        overall_expected_files.append(os.path.join(refined_svs_output_dir, f"{sample}_{tech}_{sv_tool}.{suffix}refined.specific.vcf"))
 
 rule main:
     input: overall_expected_files
