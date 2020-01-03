@@ -7,7 +7,11 @@ import utils
 output_dir = config.get(utils.OUTPUT_DIR, ".")
 alignment_output_dir = os.path.join(output_dir, utils.ALIGNMENTS)
 svs_output_dir = os.path.join(output_dir, )
-raw_svs_output_dir = os.path.join(output_dir, utils.RAW)
+raw_svs_output_dir = os.path.join(svs_output_dir, utils.RAW)
+refined_svs_output_dir = os.path.join(svs_output_dir, utils.REFINED)
+ins_to_dup_output_dir = os.path.join(refined_svs_output_dir, utils.INS_TO_DUP)
+iris_refined_output_dir = os.path.join(refined_svs_output_dir, utils.IRIS_REFINED)
+specific_marked_output_dir = os.path.join(refined_svs_output_dir, utils.SPECIFIC_MARKED)
 
 utils.ensure_samples_correctness(config)
 sample_to_reads_paths = utils.get_samples_to_reads_paths(config)
@@ -24,11 +28,14 @@ for (sample, tech) in sample_to_reads_paths.keys():
             suffix = utils.get_sniffles_sens_suffix(config) + "."
         else:
             suffix = ""
-        overall_expected_files.append(os.path.join(alignment_output_dir, f"{sample}_{tech}.coverage.txt"))
-        overall_expected_files.append(os.path.join(raw_svs_output_dir, f"{sample}_{tech}_{sv_tool}.{suffix}vcf"))
+        # overall_expected_files.append(os.path.join(alignment_output_dir, f"{sample}_{tech}.coverage.txt"))
+        # overall_expected_files.append(os.path.join(raw_svs_output_dir, f"{sample}_{tech}_{sv_tool}.{suffix}vcf"))
+        overall_expected_files.append(os.path.join(refined_svs_output_dir, f"{sample}_{tech}_{sv_tool}.{suffix}.refined.nSVtypes.specific.vcf"))
+        overall_expected_files.append(os.path.join(refined_svs_output_dir, f"{sample}_{tech}_{sv_tool}.{suffix}.refined.specific.vcf"))
 
 rule main:
     input: overall_expected_files
 
 include: "call_svs_sniffles_single.snakefile"
 include: "align_single.snakefile"
+include: "jasmine_pre.snakefile"

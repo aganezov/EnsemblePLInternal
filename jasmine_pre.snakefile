@@ -151,3 +151,4 @@ rule create_first_vcf_file_list:
 
 localrules: create_first_vcf_file_list, create_bam_file_list
 
+include: "call_svs_sniffles_single.snakefile"
