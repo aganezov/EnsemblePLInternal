@@ -21,7 +21,7 @@ jasmine_config=config.get(utils.TOOLS, {}).get(utils.JASMINE, {})
 tech_regex = utils.get_tech_regex(config)
 
 rule get_raw_specific:
-    output: os.path.join(raw_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".specific.vcf")
+    output: protected(os.path.join(raw_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".specific.vcf"))
     input: os.path.join(raw_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".specific_marked.vcf")
     run:
        shell('grep "#" {input[0]} > {output[0]}')
