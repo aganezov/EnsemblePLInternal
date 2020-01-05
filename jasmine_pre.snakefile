@@ -39,8 +39,8 @@ rule specific_or_sv_types:
     input: os.path.join(refined_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".refined.vcf")
     output: os.path.join(refined_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".refined.specific.vcf")
     run:
-        shell(f'grep "#" {input[0]} > {output[0]}')
-        shell(f'grep "IN_SPECIFIC=1" {input[0]} >> {output[0]}')
+        shell('grep "#" {input[0]} > {output[0]}')
+        shell('grep "IN_SPECIFIC=1" {input[0]} >> {output[0]}')
 
 rule spec_marked_sensitive_or_sv_types_ins_to_dup:
     input: os.path.join(refined_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".refined.nSVtypes.vcf")
@@ -60,8 +60,8 @@ rule specific_new_sv_types:
     input: os.path.join(refined_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".refined.nSVtypes.vcf")
     output: os.path.join(refined_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".refined.nSVtypes.specific.vcf")
     run:
-        shell(f'grep "#" {input[0]} > {output[0]}')
-        shell(f'grep "IN_SPECIFIC=1" {input[0]} >> {output[0]}')
+        shell('grep "#" {input[0]} > {output[0]}')
+        shell('grep "IN_SPECIFIC=1" {input[0]} >> {output[0]}')
 
 rule spec_marked_sensitive_new_sv_type_final_location:
     input: vcf=os.path.join(specific_marked_output_dir, "{sample}_{tech}_sniffles", "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "_dupToIns_irisRefined_markedSpec.vcf")
