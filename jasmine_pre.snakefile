@@ -45,7 +45,7 @@ rule specific_or_sv_types:
 rule spec_marked_sensitive_or_sv_types_ins_to_dup:
     input: os.path.join(refined_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".refined.nSVtypes.vcf")
     output: os.path.join(refined_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".refined.vcf")
-    threads: lambda wc: min(cluster_config.get("spec_marked_sensitive_or_sv_types_ins_to_dup", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), jasmine_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
+    threads: lambda wc: min(cluster_config.get("sensitive_ins_to_dup_conversion", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), jasmine_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
     log: os.path.join(refined_svs_output_dir, utils.LOG, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".refined.vcf.log")
     resources:
         mem_mb=lambda wildcards, threads: jasmine_config.get(utils.MEM_MB_CORE, 4000) + jasmine_config.get(utils.MEM_MB_PER_THREAD, 1000) * threads

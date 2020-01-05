@@ -47,13 +47,11 @@ rule merged_coverage:
 
 def read_extensions_per_sample(sample, tech):
     result = set()
-    # print(samples_to_reads_paths[(sample, tech.upper())])
     for read_path in samples_to_reads_paths[(sample, tech.upper())]:
         if read_path.endswith(("fastq", "fq", "fastq.gz", "fq.gz")):
             result.add("fastq")
         elif read_path.endswith(("fasta", "fa", "fasta.gz", "fa.gz")):
             result.add("fasta")
-    # print(result)
     return sorted(result)
 
 
@@ -62,26 +60,17 @@ def aggregated_input_for_bam_merging(wildcards):
     assert "fasta" in extensions or "fastq" in extensions
     result = []
     if "fasta" in extensions:
-        # print("fasta")
         chekpoint_output = checkpoints.split_fasta.get(**wildcards).output[0]
-        # print(f"checkpoint output {chekpoint_output}")
-        # print(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fasta_" + "_{chunk_id}"))
-        # print(glob_wildcards(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fasta_" + "{chunk_id}")))
-        # print(glob_wildcards(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fasta_" + "{chunk_id}")).chunk_id)
         result.extend(expand(
             os.path.join(alignment_output_dir, f"{wildcards.sample}_{wildcards.tech}_fasta_" + "{chunk_id}.sort.bam"),
             chunk_id=glob_wildcards(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fasta_" + "{chunk_id}")).chunk_id
         ))
     if "fastq" in extensions:
-        # print("fastq")
         chekpoint_output = checkpoints.split_fastq.get(**wildcards).output[0]
-        # print(f"checkpoint output {chekpoint_output}")
-        # print(glob_wildcards(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fastq_" + "{chunk_id}")).chunk_id)
         result.extend(expand(
             os.path.join(alignment_output_dir, f"{wildcards.sample}_{wildcards.tech}_fastq_" + "{chunk_id}.sort.bam"),
             chunk_id=glob_wildcards(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fastq_" + "{chunk_id}")).chunk_id
         ))
-    # print(f"result {result}")
     return result
 
 rule single_sam_to_sort_bam:
