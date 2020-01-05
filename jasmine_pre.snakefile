@@ -81,7 +81,7 @@ rule spec_marked_sensitive_new_sv_types:
         java=java_config.get(utils.PATH, "java"),
     run:
         min_support=utils.get_min_support(input.coverage, params.min_support_fixed, params.min_support_fraction)
-        shell("{params.java} -cp {params.java_src} Main file_list={input.vcf_file_list} --preprocess_only --mark_specific out_dir={params.output_dir} spec_reads=" + str(min_support) + "spec_len={params.min_length} out_file=test.vcf &> {log}")
+        shell("{params.java} -cp {params.java_src} Main file_list={input.vcf_file_list} --preprocess_only --mark_specific out_dir={params.output_dir} spec_reads=" + str(min_support) + " spec_len={params.min_length} out_file=test.vcf &> {log}")
 
 rule refined_sensitive_new_sv_types:
     input: vcf=os.path.join(ins_to_dup_output_dir, "{sample}_{tech}_sniffles", "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "_dupToIns.vcf"),
