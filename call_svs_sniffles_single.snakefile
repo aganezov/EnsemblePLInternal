@@ -18,6 +18,7 @@ samples_regex = utils.get_samples_regex(sample_to_reads_paths)
 
 sniffles_config = config.get(utils.TOOLS, {}).get(utils.SNIFFLES, {})
 jasmine_config=config.get(utils.TOOLS, {}).get(utils.JASMINE, {})
+iris_config=config.get(utils.TOOLS, {}).get(utils.IRIS, {})
 tech_regex = utils.get_tech_regex(config)
 
 rule get_raw_specific:
