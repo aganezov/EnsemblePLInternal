@@ -26,6 +26,8 @@ rule get_raw_specific:
     output: protected(os.path.join(raw_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".specific.vcf"))
     input: vcf=os.path.join(raw_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "_markedSpec.vcf"),
            vcf_list=os.path.join(raw_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".vcf_list_markedSpec.txt")
+    resources:
+        mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
     run:
        shell('grep "#" {input.vcf} > {output[0]}')
        shell('grep "IN_SPECIFIC=1" {input.vcf} >> {output[0]}')
@@ -54,6 +56,8 @@ rule mark_specific_in_raw:
 rule raw_vcf_files_list:
     input: os.path.join(raw_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".vcf")
     output: temp(os.path.join(raw_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".vcf_list.txt"))
+    resources:
+        mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
     run:
         with open(output[0], "wt") as dest:
             print(input[0], file=dest)

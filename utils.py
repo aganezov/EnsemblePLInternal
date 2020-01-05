@@ -2,6 +2,7 @@ import os
 from collections import defaultdict
 
 DEFAULT_THREAD_CNT = 99
+DEFAULT_CLUSTER_MEM_MB = 4000
 
 OUTPUT_DIR = "output_dir"
 ALIGNMENTS = "alignments"

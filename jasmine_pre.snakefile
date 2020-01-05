@@ -27,6 +27,8 @@ racon_config=config.get(utils.TOOLS, {}).get(utils.RACON, {})
 rule specific_or_sv_types:
     input: os.path.join(refined_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".refined.vcf")
     output: os.path.join(refined_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".refined.specific.vcf")
+    resources:
+        mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
     run:
         shell('grep "#" {input[0]} > {output[0]}')
         shell('grep "IN_SPECIFIC=1" {input[0]} >> {output[0]}')
@@ -48,6 +50,8 @@ rule spec_marked_sensitive_or_sv_types_ins_to_dup:
 rule specific_new_sv_types:
     input: os.path.join(refined_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".refined.nSVtypes.vcf")
     output: os.path.join(refined_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".refined.nSVtypes.specific.vcf")
+    resources:
+        mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
     run:
         shell('grep "#" {input[0]} > {output[0]}')
         shell('grep "IN_SPECIFIC=1" {input[0]} >> {output[0]}')
@@ -55,6 +59,8 @@ rule specific_new_sv_types:
 rule spec_marked_sensitive_new_sv_type_final_location:
     input: vcf=os.path.join(specific_marked_output_dir, "{sample}_{tech}_sniffles", "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "_dupToIns_irisRefined_markedSpec.vcf")
     output: os.path.join(refined_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".refined.nSVtypes.vcf")
+    resources:
+        mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
     params:
         min_support_fixed=jasmine_config.get(utils.SPECIFIC_MARKED, {}).get(utils.SPEC_READS_FIXED, 10),
         min_support_fraction=jasmine_config.get(utils.SPECIFIC_MARKED, {}).get(utils.SPEC_READS_FRACTION, 0.25),
@@ -112,6 +118,8 @@ rule refined_sensitive_new_sv_types:
 rule create_bam_file_list:
     output: temp(os.path.join(ins_to_dup_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles", "bams.txt"))
     input: os.path.join(alignment_output_dir, "{sample}_{tech}.sort.bam")
+    resources:
+        mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
     run:
         with open(output[0], "wt") as dest:
             print(input[0], file=dest)
@@ -140,6 +148,8 @@ rule sensitive_ins_to_dup_conversion:
 rule create_first_vcf_file_list:
     output: temp(os.path.join(refined_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles", "vcf_list.txt"))
     input: os.path.join(raw_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".vcf")
+    resources:
+        mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
     run:
         with open(output[0], "wt") as dest:
             print(input[0], file=dest)

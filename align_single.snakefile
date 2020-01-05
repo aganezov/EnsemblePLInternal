@@ -39,6 +39,8 @@ rule merged_coverage:
     output: os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.coverage.txt")
     message: "Computing average alignment read depth coverage on {input}"
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}.coverage.txt.log")
+    resources:
+        mem_mb=lambda wildcards, threads: samtools_config.get(utils.MEM_MB_CORE, 2000) + samtools_config.get(utils.MEM_MB_PER_THREAD, 1000) * threads
     params:
         samtools=samtools_config.get(utils.PATH, "samtools"),
         awk=awk_config.get(utils.PATH, "awk")
@@ -125,6 +127,8 @@ checkpoint split_fastq:
     input:
         fastq=lambda wc: get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fastq", "fq")),
         fastq_gz=lambda wc: get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fastq.gz", "fa.gz")),
+    resources:
+        mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
     params:
         cut_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fastq", "fq"))) == 0 else f"<(cat {' '.join(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=('fastq', 'fq')))})",
         zcat_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fastq.gz", "fq.gz"))) == 0 else f"<(zcat {' '.join(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=('fastq.gz', 'fq.gz')))})",
@@ -139,6 +143,8 @@ checkpoint split_fasta:
     input:
         fasta=lambda wc: get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta", "fa")),
         fasta_gz=lambda wc: get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta.gz", "fa.gz")),
+    resources:
+        mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
     params:
         cut_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta", "fa"))) == 0 else "<(cat {fasta})".format(fasta=" ".join(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta", "fa")))),
         zcat_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta.gz", "fa.gz"))) == 0 else "<(zcat {fasta_gz})".format(fasta_gz=" ".join(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta.gz", "fa.gz")))),
