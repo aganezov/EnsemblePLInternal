@@ -24,17 +24,6 @@ iris_config=config.get(utils.TOOLS, {}).get(utils.IRIS, {})
 minimap2_config=config.get(utils.TOOLS, {}).get(utils.MINIMAP2, {})
 racon_config=config.get(utils.TOOLS, {}).get(utils.RACON, {})
 
-
-def get_min_support(coverage_file, min_support_fixed_cnt, min_support_fraction):
-    coverage = 100
-    with open(coverage_file, "rt") as source:
-        for line in source:
-            coverage = int(float(line.strip().split("=")[1].strip()))
-            break
-    return min(int(min_support_fixed_cnt), int(coverage * min_support_fraction))
-
-
-
 rule specific_or_sv_types:
     input: os.path.join(refined_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".refined.vcf")
     output: os.path.join(refined_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".refined.specific.vcf")
@@ -91,7 +80,7 @@ rule spec_marked_sensitive_new_sv_types:
         java_src=":".join(x for x in [jasmine_config.get(utils.SRC_PATH, ""), iris_config.get(utils.SRC_PATH, "")] if len(x) > 0),
         java=java_config.get(utils.PATH, "java"),
     run:
-        min_support=get_min_support(input.coverage, params.min_support_fixed, params.min_support_fraction)
+        min_support=utils.get_min_support(input.coverage, params.min_support_fixed, params.min_support_fraction)
         shell("{params.java} -cp {params.java_src} Main file_list={input.vcf_file_list} --preprocess_only --mark_specific out_dir={params.output_dir} spec_reads=" + str(min_support) + "spec_len={params.min_length} out_file=test.vcf &> {log}")
 
 rule refined_sensitive_new_sv_types:

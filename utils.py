@@ -116,3 +116,12 @@ def ensure_enabled_sv_tools(config):
     for tool in config[SV_TOOLS_ENABLED]:
         if tool.lower() not in SUPPORTED_SV_TOOLS:
             raise ValueError(f"Attempt to enable unsupported SV inference tool {tool}. Only {','.join(SUPPORTED_SV_TOOLS)} are supported")
+
+
+def get_min_support(coverage_file, min_support_fixed_cnt, min_support_fraction):
+    coverage = 100
+    with open(coverage_file, "rt") as source:
+        for line in source:
+            coverage = int(float(line.strip().split("=")[1].strip()))
+            break
+    return min(int(min_support_fixed_cnt), int(coverage * min_support_fraction))

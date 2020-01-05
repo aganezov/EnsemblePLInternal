@@ -24,24 +24,39 @@ java_config=config.get(utils.TOOLS, {}).get(utils.JAVA, {})
 
 rule get_raw_specific:
     output: protected(os.path.join(raw_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".specific.vcf"))
-    input: os.path.join(raw_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".specific_marked.vcf")
+    input: vcf=os.path.join(raw_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "_markedSpec.vcf"),
+           vcf_list=os.path.join(raw_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".vcf_list_markedSpec.txt")
     run:
-       shell('grep "#" {input[0]} > {output[0]}')
-       shell('grep "IN_SPECIFIC=1" {input[0]} >> {output[0]}')
+       shell('grep "#" {input.vcf} > {output[0]}')
+       shell('grep "IN_SPECIFIC=1" {input.vcf} >> {output[0]}')
 
 rule mark_specific_in_raw:
-    output: temp(os.path.join(raw_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".specific_marked.vcf"))
-    input: os.path.join(raw_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".vcf")
+    output: vcf=temp(os.path.join(raw_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + "_markedSpec.vcf")),
+            vcf_file_list=temp(os.path.join(raw_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".vcf_list_markedSpec.txt"))
+    input: vcf=os.path.join(raw_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".vcf"),
+           coverage=os.path.join(alignment_output_dir, "{sample}_{tech}.coverage.txt"),
+           vcf_file_list=os.path.join(raw_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".vcf_list.txt")
     threads: lambda wc: min(cluster_config.get("sensitive_ins_to_dup_conversion", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), jasmine_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
-    log: os.path.join(raw_svs_output_dir, utils.LOG, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".specific_marked.vcf.log")
+    log: os.path.join(raw_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "_markedSpec.vcf.log")
     resources:
-        mem_mb=lambda wildcards, threads: jasmine_config.get(utils.MEM_MB_CORE, 4000) + jasmine_config.get(utils.MEM_MB_PER_THREAD, 1000) * threads
+        mem_mb=lambda wildcards, threads: jasmine_config.get(utils.MEM_MB_CORE, 10000) + jasmine_config.get(utils.MEM_MB_PER_THREAD, 1000) * threads
     params:
+        output_dir=raw_svs_output_dir,
+        min_support_fixed=jasmine_config.get(utils.SPECIFIC_MARKED, {}).get(utils.SPEC_READS_FIXED, 10),
+        min_support_fraction=jasmine_config.get(utils.SPECIFIC_MARKED, {}).get(utils.SPEC_READS_FRACTION, 0.25),
+        min_length=jasmine_config.get(utils.SPECIFIC_MARKED, {}).get(utils.SPEC_LEN, 30),
         java_src=":".join(x for x in [jasmine_config.get(utils.SRC_PATH, ""), iris_config.get(utils.SRC_PATH, "")] if len(x) > 0),
         java=java_config.get(utils.PATH, "java"),
-        ins_to_dup_script_name=jasmine_config.get(utils.SCRIPT_NAME, "InsertionsToDuplications")
-    shell:
-        "{params.java} -cp {params.java_src} {params.ins_to_dup_script_name} {input} {output} &> {log}"
+    run:
+        min_support=utils.get_min_support(input.coverage, params.min_support_fixed, params.min_support_fraction)
+        shell("{params.java} -cp {params.java_src} Main file_list={input.vcf_file_list} --preprocess_only --mark_specific out_dir={params.output_dir} spec_reads=" + str(min_support) + "spec_len={params.min_length} out_file=test.vcf &> {log}")
+
+rule raw_vcf_files_list:
+    input: os.path.join(raw_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".vcf")
+    output: temp(os.path.join(raw_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".vcf_list.txt"))
+    run:
+        with open(output[0], "wt") as dest:
+            print(input[0], file=dest)
 
 rule sensitive_svs_sniffles:
     input: os.path.join(alignment_output_dir, "{sample}_{tech}.sort.bam")
