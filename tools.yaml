@@ -32,7 +32,7 @@ tools:
   jasmine:
     src_path: ""
     threads: 2
-    mem_mb_core: 10000
+    mem_mb_core: 20000
     mem_mb_per_thread: 4000
     ins_to_dup:
       max_dup_length: 10000

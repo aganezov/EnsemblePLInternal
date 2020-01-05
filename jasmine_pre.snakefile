@@ -71,7 +71,7 @@ rule spec_marked_sensitive_new_sv_types:
     threads: lambda wc: min(cluster_config.get("sensitive_ins_to_dup_conversion", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), jasmine_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
     log: os.path.join(specific_marked_output_dir, "{sample}_{tech}_sniffles", "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "_dupToIns_irisRefined_markedSpec.vcf.log")
     resources:
-        mem_mb=lambda wildcards, threads: jasmine_config.get(utils.MEM_MB_CORE, 10000) + jasmine_config.get(utils.MEM_MB_PER_THREAD, 1000) * threads
+        mem_mb=lambda wildcards, threads: jasmine_config.get(utils.MEM_MB_CORE, 20000) + jasmine_config.get(utils.MEM_MB_PER_THREAD, 1000) * threads
     params:
         output_dir=lambda wc: os.path.join(specific_marked_output_dir, wc.sample + "_" + wc.tech + "_sniffles"),
         min_support_fixed=jasmine_config.get(utils.SPECIFIC_MARKED, {}).get(utils.SPEC_READS_FIXED, 10),
