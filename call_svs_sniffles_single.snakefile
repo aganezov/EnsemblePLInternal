@@ -76,4 +76,6 @@ rule sensitive_svs_sniffles:
     shell:
         "{params.sniffles} -m {input} -v {output} --threads {threads} --min_support {params.min_support} --max_distance {params.max_distance} --max_num_splits {params.max_num_splits} --min_length {params.min_length} --num_reads_report {params.num_reads_report} --min_seq_size {params.min_seq_size} &> {log}"
 
+localrules: raw_vcf_files_list
+
 include: "align_single.snakefile"
