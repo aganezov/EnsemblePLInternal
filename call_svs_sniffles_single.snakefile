@@ -20,6 +20,7 @@ sniffles_config = config.get(utils.TOOLS, {}).get(utils.SNIFFLES, {})
 jasmine_config=config.get(utils.TOOLS, {}).get(utils.JASMINE, {})
 iris_config=config.get(utils.TOOLS, {}).get(utils.IRIS, {})
 tech_regex = utils.get_tech_regex(config)
+java_config=config.get(utils.TOOLS, {}).get(utils.JAVA, {})
 
 rule get_raw_specific:
     output: protected(os.path.join(raw_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".specific.vcf"))
