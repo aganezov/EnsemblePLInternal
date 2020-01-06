@@ -1,1 +1,1 @@
-sbatch --nodes={cluster.nodes} --cpus-per-task={cluster.nCPUs} --partition={cluster.partition} --time={cluster.time} --mem={cluster.mem_mb}M
+sbatch --nodes={cluster.nodes} --cpus-per-task={cluster.nCPUs} --partition={cluster.partition} --time={cluster.time} --mem={resources.mem_mb}M
