@@ -57,7 +57,7 @@ rule specific_new_sv_types:
         shell('grep "IN_SPECIFIC=1" {input[0]} >> {output[0]}')
 
 rule spec_marked_sensitive_new_sv_type_final_location:
-    input: vcf=os.path.join(specific_marked_output_dir, "{sample}_{tech}_sniffles", "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "_dupToIns_irisRefined_markedSpec.vcf")
+    input: os.path.join(specific_marked_output_dir, "{sample}_{tech}_sniffles", "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "_dupToIns_irisRefined_markedSpec.vcf")
     output: os.path.join(refined_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".refined.nSVtypes.vcf")
     resources:
         mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
@@ -66,7 +66,7 @@ rule spec_marked_sensitive_new_sv_type_final_location:
         min_support_fraction=jasmine_config.get(utils.SPECIFIC_MARKED, {}).get(utils.SPEC_READS_FRACTION, 0.25),
         min_length=jasmine_config.get(utils.SPECIFIC_MARKED, {}).get(utils.SPEC_LEN, 30),
     run:
-        shell("mv {input} {output}")
+        shell("cp {input} {output}")
 
 rule spec_marked_sensitive_new_sv_types:
     input: vcf=os.path.join(iris_refined_output_dir, "{sample}_{tech}_sniffles", "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "_dupToIns_irisRefined.vcf"),
@@ -95,7 +95,7 @@ rule refined_sensitive_new_sv_types:
            bam=os.path.join(alignment_output_dir, "{sample}_{tech}.sort.bam"),
            bam_bai=os.path.join(alignment_output_dir, "{sample}_{tech}.sort.bam.bai"),
            bam_file_list=os.path.join(ins_to_dup_output_dir, "{sample}_{tech}_sniffles", "bams.txt"),
-    output: vcf=temp(os.path.join(iris_refined_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles", "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "_dupToIns_irisRefined.vcf")),
+    output: vcf=os.path.join(iris_refined_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles", "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "_dupToIns_irisRefined.vcf"),
             vcf_file_list=temp(os.path.join(iris_refined_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles", "vcf_list_dupToIns_irisRefined.txt"))
     threads: lambda wc: min(cluster_config.get("refined_sensitive_new_sv_types", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), iris_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
     log: os.path.join(iris_refined_output_dir, "{sample}_{tech}_sniffles", "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "_dupToIns_irisRefined.vcf.log")
@@ -117,7 +117,7 @@ rule refined_sensitive_new_sv_types:
     shell:
         "{params.java} -cp {params.java_src} Main file_list={input.vcf_file_list} --run_iris --preprocess_only genome_file={params.ref_genome} bam_list={input.bam_file_list} "
         "--iris_args=minimap_path={params.minimap2},racon_path={params.racon},samtools_path={params.samtools},threads={threads},out_dir={params.iris_output_dir},"
-        "min_ins_length={params.min_ins_length},max_out_length={params.max_out_length},max_ins_dist={params.max_ins_dist},max_length_change={params.max_length_change} "
+        "min_ins_length={params.min_ins_length},max_out_length={params.max_out_length},max_ins_dist={params.max_ins_dist},max_length_change={params.max_length_change},--keep_long_variants "
         "out_dir={params.output_dir} out_file=test.vcf &> {log}"
 
 
