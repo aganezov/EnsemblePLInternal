@@ -26,7 +26,7 @@ tools:
     min_seq_size: 1000
     time: "24:0:0"
     mem_mb_per_thread: 1000
-    mem_mb_core: 10000
+    mem_mb_core: 15000
   java:
     path: "java"
   jasmine:
