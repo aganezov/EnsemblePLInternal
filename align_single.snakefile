@@ -18,6 +18,7 @@ utils.ensure_ref_correctness(config)
 
 ngmlr_config = config.get(utils.TOOLS, {}).get(utils.NGMLR, {})
 samtools_config = config.get(utils.TOOLS, {}).get(utils.SAMTOOLS, {})
+sed_config = config.get(utils.TOOLS, {}).get("sed", {})
 awk_config = config.get(utils.TOOLS, {}).get(utils.AWK, {})
 
 samples_regex = utils.get_samples_regex(samples_to_reads_paths)
@@ -78,7 +79,7 @@ def aggregated_input_for_bam_merging(wildcards):
 rule single_sam_to_sort_bam:
     output:temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}_{chunk_id,[a-z]+}.sort.bam"))
     input:
-        sam=os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}_{chunk_id}.sam"),
+        sam=os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}_{chunk_id}.fixed.sam"),
         tmp_dir=lambda wc: os.path.join(config["tools"].get(utils.TMP_DIR, ""), f"samtools_tmp_{wc.sample}_{wc.tech}_{wc.seq_format}_{wc.chunk_id}")
     threads:lambda wildcards: min(cluster_config.get("single_sam_to_sort_bam", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), samtools_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
     message: "Transforming an alignment sam file {input} into a sorted bam file {output}. Requested mem {resources.mem_mb}M on {threads} threads. Cluster config "
@@ -91,6 +92,17 @@ rule single_sam_to_sort_bam:
         mem_mb_per_thread=samtools_config.get(utils.MEM_MB_PER_THREAD, 1000),
     shell:
         "{params.samtools} sort -O bam -o {output} -@ {threads} -m {params.mem_mb_per_thread}M -T {params.tmp_dir} {input.sam} &> {log}"
+
+rule fix_full_soft_clip_for_very_long_reads:
+    output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}" + "_{chunk_id,[a-z]+}.fixed.sam"))
+    input: os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format,(fastq|fasta)}" + "_{chunk_id}.sam")
+    threads: 1
+    resources:
+        mem_mb=lambda wildcards, threads: samtools_config.get(utils.MEM_MB_CORE, 2000) + samtools_config.get(utils.MEM_MB_PER_THREAD, 1000) * threads
+    params:
+        sed=sed_config.get(utils.PATH, "sed")
+    shell:
+        "{params.sed} -E '/\t[0-9]+S\t/d' {input} > {output}"
 
 rule single_alignment:
     output:temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}" + "_{chunk_id,[a-z]+}.sam"))
