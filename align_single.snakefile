@@ -102,7 +102,7 @@ rule fix_full_soft_clip_for_very_long_reads:
     params:
         sed=sed_config.get(utils.PATH, "sed")
     shell:
-        "{params.sed} -E '/\t[0-9]+S\t/d' {input} > {output}"
+        "{params.sed} -E '/\\t[0-9]+S\\t/d' {input} > {output}"
 
 rule single_alignment:
     output:temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}" + "_{chunk_id,[a-z]+}.sam"))
