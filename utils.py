@@ -128,5 +128,8 @@ def get_min_support(coverage_file, min_support_fixed_cnt, min_support_fraction):
     with open(coverage_file, "rt") as source:
         for line in source:
             coverage = int(float(line.strip().split("=")[1].strip()))
+            print(f"extracted coverage of {coverage} from file {coverage_file}")
             break
-    return min(int(min_support_fixed_cnt), int(coverage * min_support_fraction))
+    result = min(int(min_support_fixed_cnt), int(coverage * min_support_fraction))
+    print(f"target min support cnt {result} with min support fixed cnt = {min_support_fixed_cnt} and min_support_fraction = {min_support_fraction}")
+    return result
