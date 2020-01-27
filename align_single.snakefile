@@ -171,7 +171,7 @@ rule samtools_tmp_dir:
 
 rule index_bam:
     input: os.path.join(alignment_output_dir, "{sample}_{tech}.sort.bam")
-    output: protected(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.sort.bam.bai"))
+    output: os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.sort.bam.bai")
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}.sort.bam.bai.log")
     resources:
         mem_mb=lambda wildcards: samtools_config.get(utils.MEM_MB_CORE, 2000) + samtools_config.get(utils.MEM_MB_PER_THREAD, 1000)
@@ -181,7 +181,7 @@ rule index_bam:
         "{params.samtools} index {input}"
 
 rule merge_sorted:
-    output: protected(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.sort.bam"))
+    output: os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.sort.bam")
     input: bams=aggregated_input_for_bam_merging
     message: "Combining sorted bam files. Requested mem {resources.mem_mb}M."
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}.sort.bam.log")
