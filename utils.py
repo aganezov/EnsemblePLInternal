@@ -12,6 +12,7 @@ LOG = "log"
 TOOLS = "tools"
 THREADS = "threads"
 SAMTOOLS = "samtools"
+ALIGNER = "aligner"
 
 AWK = "awk"
 NGMLR = "ngmlr"
@@ -82,6 +83,11 @@ def get_samples_to_reads_paths(config):
                 raise ValueError(f"Unsupported input format for read path {read_path}. Only 'fastq', 'fq', 'fastq.gz', 'fq.gz', 'fasta', 'fasta.gz', 'fa', and 'fa.gz' are supported")
             samples_to_reads_paths[(sample_name, tech)].append(read_path)
     return samples_to_reads_paths
+
+
+def ensure_aligner(config):
+    if config['aligner'] not in {"ngmlr", "minimap2"}:
+        raise ValueError(f'unsupported aligner option {config["aligner"]}, only ngmlr and minimap2 are supported')
 
 
 def get_samples_regex(samples_to_reads_paths):

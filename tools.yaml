@@ -1,6 +1,8 @@
 sv_tools_enabled:
   - "sniffles"
 
+aligner: "ngmlr"
+
 tools:
   tmp_dir: ""
   samtools:

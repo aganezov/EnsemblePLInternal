@@ -20,6 +20,7 @@ ngmlr_config = config.get(utils.TOOLS, {}).get(utils.NGMLR, {})
 samtools_config = config.get(utils.TOOLS, {}).get(utils.SAMTOOLS, {})
 sed_config = config.get(utils.TOOLS, {}).get("sed", {})
 awk_config = config.get(utils.TOOLS, {}).get(utils.AWK, {})
+minimap2_config=config.get(utils.TOOLS, {}).get(utils.MINIMAP2, {})
 
 samples_regex = utils.get_samples_regex(samples_to_reads_paths)
 read_paths_regex = utils.get_reads_paths_regex(samples_to_reads_paths)
@@ -100,26 +101,30 @@ rule fix_full_soft_clip_for_very_long_reads:
     resources:
         mem_mb=lambda wildcards, threads: samtools_config.get(utils.MEM_MB_CORE, 2000) + samtools_config.get(utils.MEM_MB_PER_THREAD, 1000) * threads
     params:
-        sed=sed_config.get(utils.PATH, "sed")
+        command=lambda wc: f"{sed_config.get(utils.PATH, 'sed')} -E '/\\t[0-9]+S\\t/d'" if config.get(utils.ALIGNER, "ngmlr") else "cat"
     shell:
-        "{params.sed} -E '/\\t[0-9]+S\\t/d' {input} > {output}"
+        "{params.command} {input} > {output}"
 
 rule single_alignment:
     output:temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}" + "_{chunk_id,[a-z]+}.sam"))
     input: os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}_{chunk_id}.{seq_format}")
     threads: lambda wildcards: min(cluster_config.get("single_alignment", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), ngmlr_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
-    message: "Aligning reads from {input} with NGMLR to {output}. Requested mem {resources.mem_mb}M on {threads} threads. Cluster config "
+    message: "Aligning reads from {input} to {output}. Requested mem {resources.mem_mb}M on {threads} threads. Cluster config "
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}_{seq_format}", "{sample}_{tech}_{seq_format}_{chunk_id}.sam.log")
     resources:
         mem_mb=lambda wildcards, threads: ngmlr_config.get(utils.MEM_MB_CORE, 5000) + ngmlr_config.get(utils.MEM_MB_PER_THREAD, 500) * threads,
     params:
-        ngmlr=ngmlr_config.get(utils.PATH, "ngmlr"),
-        tech_config=lambda wildcards: "ont" if wildcards.tech.lower() == "ont" else "pacbio",
+        aligner=lambda wc: ngmlr_config.get(utils.PATH, "ngmlr") if config.get(utils.ALIGNER, "ngmlr") else minimap2_config.get(utils.PATH, "minimap2"),
+        input_flag=lambda wc: "-q" if config.get(utils.ALIGNER, "ngmlr") else "",
+        preset_value=lambda wc: ("" if config.get(utils.ALIGNER, "ngmlr") else "map-") + ("ont" if wc.tech.lower() == "ont" else ("pacbio" if config.get(utils.ALIGNER, "ngmlr") else "pb")),
         reference=config[utils.REFERENCE],
+        sam_output_flag=lambda wc: "" if config.get(utils.ALIGNER, "ngmlr") else "-a",
+        reference_flag=lambda wc: "-r" if config.get(utils.ALIGNER, "ngmlr") else "",
+        bam_fix_flag=lambda wc: "--bam-fix" if config.get(utils.ALIGNER, "ngmlr") else "",
     shell:
-        "{params.ngmlr} -r {params.reference} -q {input} -t {threads} -o {output} --bam-fix -x {params.tech_config} &> {log}"
+        "{params.aligner} {params.reference_flag} {params.reference} {params.input_flag} {input} -t {threads} -o {output} -x {params.preset_value} {params.sam_output_flag} {params.bam_fix_flag} &> {log}"
 
-rule ensure_ngmlr_input_extension:
+rule ensure_reads_input_extension:
     input: os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}", "{sample}_{tech}_{seq_format}_{chunk_id}")
     output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}_{chunk_id,[a-z]+}.{seq_format}"))
     shell: "mv {input} {output} && touch {input}"
@@ -193,4 +198,4 @@ rule merge_sorted:
         "{params.samtools} merge {output} {input.bams} &> {log}"
 
 
-localrules: ensure_ngmlr_input_extension, samtools_tmp_dir
+localrules: ensure_reads_input_extension, samtools_tmp_dir
