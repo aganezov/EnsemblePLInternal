@@ -28,9 +28,8 @@ rule get_raw_specific:
            vcf_list=os.path.join(raw_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".vcf_list_markedSpec.txt")
     resources:
         mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
-    run:
-       shell('grep "#" {input.vcf} > {output[0]}')
-       shell('grep "IN_SPECIFIC=1" {input.vcf} >> {output[0]}')
+    shell:
+        "awk '($0 ~/^#/ || $0 ~/IS_SPECIFIC=1/)' {input.vcf} > {output}"
 
 rule mark_specific_in_raw:
     output: vcf=temp(os.path.join(raw_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + "_markedSpec.vcf")),
