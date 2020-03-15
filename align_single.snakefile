@@ -114,13 +114,13 @@ rule single_alignment:
     resources:
         mem_mb=lambda wildcards, threads: ngmlr_config.get(utils.MEM_MB_CORE, 5000) + ngmlr_config.get(utils.MEM_MB_PER_THREAD, 500) * threads,
     params:
-        aligner=lambda wc: ngmlr_config.get(utils.PATH, "ngmlr") if config.get(utils.ALIGNER, "ngmlr") else minimap2_config.get(utils.PATH, "minimap2"),
-        input_flag=lambda wc: "-q" if config.get(utils.ALIGNER, "ngmlr") else "",
-        preset_value=lambda wc: ("" if config.get(utils.ALIGNER, "ngmlr") else "map-") + ("ont" if wc.tech.lower() == "ont" else ("pacbio" if config.get(utils.ALIGNER, "ngmlr") else "pb")),
+        aligner=lambda wc: ngmlr_config.get(utils.PATH, "ngmlr") if config.get(utils.ALIGNER, "ngmlr") == "ngmlr" else minimap2_config.get(utils.PATH, "minimap2"),
+        input_flag=lambda wc: "-q" if config.get(utils.ALIGNER, "ngmlr") == "ngmlr" else "",
+        preset_value=lambda wc: ("" if config.get(utils.ALIGNER, "ngmlr") == "ngmlr" else "map-") + ("ont" if wc.tech.lower() == "ont" else ("pacbio" if config.get(utils.ALIGNER, "ngmlr") == "ngmlr" else "pb")),
         reference=config[utils.REFERENCE],
-        sam_output_flag=lambda wc: "" if config.get(utils.ALIGNER, "ngmlr") else "-a",
-        reference_flag=lambda wc: "-r" if config.get(utils.ALIGNER, "ngmlr") else "",
-        bam_fix_flag=lambda wc: "--bam-fix" if config.get(utils.ALIGNER, "ngmlr") else "",
+        sam_output_flag=lambda wc: "" if config.get(utils.ALIGNER, "ngmlr") == "ngmlr" else "-a",
+        reference_flag=lambda wc: "-r" if config.get(utils.ALIGNER, "ngmlr") == "ngmlr" else "",
+        bam_fix_flag=lambda wc: "--bam-fix" if config.get(utils.ALIGNER, "ngmlr") == "ngmlr" else "",
     shell:
         "{params.aligner} {params.reference_flag} {params.reference} {params.input_flag} {input} -t {threads} -o {output} -x {params.preset_value} {params.sam_output_flag} {params.bam_fix_flag} &> {log}"
 
