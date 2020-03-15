@@ -121,8 +121,9 @@ rule single_alignment:
         sam_output_flag=lambda wc: "" if config.get(utils.ALIGNER, "ngmlr") == "ngmlr" else "-a",
         reference_flag=lambda wc: "-r" if config.get(utils.ALIGNER, "ngmlr") == "ngmlr" else "",
         bam_fix_flag=lambda wc: "--bam-fix" if config.get(utils.ALIGNER, "ngmlr") == "ngmlr" else "",
+        md_flag=lambda wc: "" if config.get(utils.ALIGNER, "ngmlr") == "ngmlr" else "--MD"
     shell:
-        "{params.aligner} {params.reference_flag} {params.reference} {params.input_flag} {input} -t {threads} -o {output} -x {params.preset_value} {params.sam_output_flag} {params.bam_fix_flag} &> {log}"
+        "{params.aligner} {params.reference_flag} {params.reference} {params.input_flag} {input} -t {threads} -o {output} -x {params.preset_value} {params.sam_output_flag} {params.bam_fix_flag} {params.md_flag} &> {log}"
 
 rule ensure_reads_input_extension:
     input: os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}", "{sample}_{tech}_{seq_format}_{chunk_id}")
