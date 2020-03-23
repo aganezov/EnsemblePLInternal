@@ -68,7 +68,7 @@ rule spec_marked_sensitive_new_sv_type_final_location:
 
 rule spec_marked_sensitive_new_sv_types:
     input: vcf=os.path.join(iris_refined_output_dir, "{sample}_{tech}_sniffles", "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "_dupToIns_irisRefined.vcf"),
-           coverage=os.path.join(alignment_output_dir, "{sample}_{tech}.coverage.txt"),
+           coverage=os.path.join(alignment_output_dir, utils.STATS, "{sample}_{tech}.coverage.txt"),
            vcf_file_list=os.path.join(iris_refined_output_dir, "{sample}_{tech}_sniffles", "vcf_list_dupToIns_irisRefined.txt")
     output: vcf=os.path.join(specific_marked_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles", "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "_dupToIns_irisRefined_markedSpec.vcf"),
             vcf_file_list=os.path.join(specific_marked_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles", "vcf_list_dupToIns_irisRefined_markedSpec.txt")

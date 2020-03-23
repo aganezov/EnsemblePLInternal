@@ -35,7 +35,7 @@ rule mark_specific_in_raw:
     output: vcf=temp(os.path.join(raw_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + "_markedSpec.vcf")),
             vcf_file_list=temp(os.path.join(raw_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".vcf_list_markedSpec.txt"))
     input: vcf=os.path.join(raw_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".vcf"),
-           coverage=os.path.join(alignment_output_dir, "{sample}_{tech}.coverage.txt"),
+           coverage=os.path.join(alignment_output_dir, utils.STATS, "{sample}_{tech}.coverage.txt"),
            vcf_file_list=os.path.join(raw_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".vcf_list.txt")
     threads: lambda wc: min(cluster_config.get("sensitive_ins_to_dup_conversion", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), jasmine_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
     log: os.path.join(raw_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "_markedSpec.vcf.log")
