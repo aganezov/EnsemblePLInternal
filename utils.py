@@ -61,6 +61,8 @@ MEM_MB_CORE = "mem_mb_core"
 
 NCPUS = "nCPUs"
 
+STATS = "stats"
+
 
 def ensure_samples_correctness(config):
     if SAMPLES not in config or not isinstance(config[SAMPLES], list) or len(config[SAMPLES]) < 1:

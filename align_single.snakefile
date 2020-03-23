@@ -38,7 +38,7 @@ def split_fastx_dirs(wildcards):
 rule merged_coverage:
     input: bam=os.path.join(alignment_output_dir, "{sample}_{tech}.sort.bam"),
            tmp_fastq_dir=split_fastx_dirs,
-    output: os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.coverage.txt")
+    output: os.path.join(alignment_output_dir, utils.STATS, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.coverage.txt")
     message: "Computing average alignment read depth coverage on {input}"
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}.coverage.txt.log")
     resources:
@@ -48,6 +48,19 @@ rule merged_coverage:
         awk=awk_config.get(utils.PATH, "awk")
     shell:
         "{params.samtools} depth -a {input.bam} | {params.awk} \'{{sum += $3}} END {{print \"Average coverage (all) = \",sum/NR}}\' > {output} 2> {log}"
+
+rule alignment_yield:
+    input: bam=os.path.join(alignment_output_dir, "{sample}_{tech}.sort.bam")
+    output: os.path.join(alignment_output_dir, utils.STATS, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.alignment.yield.txt")
+    message: "Computing total read length (i.e., sequencing yield) from the produced bam file."
+    log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}.alignment.yield.log")
+    resources:
+        mem_mb=lambda wildcards, threads: samtools_config.get(utils.MEM_MB_CORE, 2000) + samtools_config.get(utils.MEM_MB_PER_THREAD, 1000) * threads
+    params:
+        samtools=samtools_config.get(utils.PATH, "samtools"),
+        awk=awk_config.get(utils.PATH, "awk")
+    shell:
+        "{params.samtools} bam2fq {input} | awk \'NR%4==2 {{l+=length($0)}} END {{print \"Total read length \",l}}\' > {output} 2> {log}"
 
 def read_extensions_per_sample(sample, tech):
     result = set()
