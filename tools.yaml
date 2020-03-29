@@ -49,7 +49,7 @@ tools:
     mem_mb_core: 20000
     mem_mb_per_thread: 1000
     min_ins_length: 30
-    max_out_length: 3000000000
+    max_out_length: 100000
     max_ins_dist: 100
     max_length_change: 0.25
   minimap2:

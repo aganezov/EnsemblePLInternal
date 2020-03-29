@@ -108,7 +108,7 @@ rule refined_sensitive_new_sv_types:
         java=java_config.get(utils.PATH, "java"),
         minimap2=minimap2_config.get(utils.PATH, "minimap2"),
         racon=racon_config.get(utils.PATH, "racon"),
-        max_out_length=iris_config.get(utils.MAX_OUT_LENGTH, 3000000000),
+        max_out_length=iris_config.get(utils.MAX_OUT_LENGTH, 100000),
         min_ins_length=iris_config.get(utils.MIN_INS_LENGTH, 30),
         max_ins_dist=iris_config.get(utils.MAX_INS_DIST, 100),
         max_length_change=iris_config.get(utils.MAX_LENGTH_CHANGE, 0.25),
