@@ -109,6 +109,7 @@ def get_extra_alignments_paths(config):
         tech = sample_data[TECH].upper()
         if EXISTING_ALIGNMENTS not in sample_data or not isinstance(sample_data[EXISTING_ALIGNMENTS], list) or len(sample_data[EXISTING_ALIGNMENTS]) < 1:
             samples_to_reads_paths[(sample_name, tech)] = []
+            continue
         for alignment_path in sample_data[EXISTING_ALIGNMENTS]:
             if not alignment_path.endswith(("bam")):
                 raise ValueError(
