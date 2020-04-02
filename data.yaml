@@ -11,6 +11,8 @@ samples:
   - sample: sample_2
     reads_paths:
       - "path1/reads.fq"
+    existing_alignments:
+      - ""
     tech: "ONT"
 
 # full path to the reference. Required.

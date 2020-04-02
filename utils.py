@@ -64,6 +64,13 @@ NCPUS = "nCPUs"
 STATS = "stats"
 
 
+ENABLE_SV_INFERENCE = "enable_sv_inference"
+ENABLE_SV_REFINEMENT = "enable_sv_refinement"
+
+
+EXISTING_ALIGNMENTS = "existing_alignments"
+
+
 def ensure_samples_correctness(config):
     if SAMPLES not in config or not isinstance(config[SAMPLES], list) or len(config[SAMPLES]) < 1:
         raise ValueError("Configuration data.yaml file is missing information about samples or the setup is not dictionary-like")
@@ -90,6 +97,24 @@ def get_samples_to_reads_paths(config):
 def ensure_aligner(config):
     if config['aligner'] not in {"ngmlr", "minimap2"}:
         raise ValueError(f'unsupported aligner option {config["aligner"]}, only ngmlr and minimap2 are supported')
+
+
+def get_extra_alignments_paths(config):
+    samples_to_reads_paths = defaultdict(list)
+    for sample_data in config["samples"]:
+        sample_name = sample_data["sample"]
+        if TECH not in sample_data or sample_data[TECH].lower() not in ["ont", "pb", "pacbio", "pbccs", "pacbioccs"]:
+            raise ValueError(
+                f"incorrect or missing tech {sample_data[TECH]} specified for sample {sample_name} in data.yaml. Only ONT or PB are supported, and tech specification is required")
+        tech = sample_data[TECH].upper()
+        if EXISTING_ALIGNMENTS not in sample_data or not isinstance(sample_data[READS_PATHS], list) or len(sample_data[READS_PATHS]) < 1:
+            samples_to_reads_paths[(sample_name, tech)] = []
+        for alignment_path in sample_data[READS_PATHS]:
+            if not alignment_path.endswith(("bam")):
+                raise ValueError(
+                    f"Unsupported extra alignment format for alignment {alignment_path}. Only 'bam' are supported")
+            samples_to_reads_paths[(sample_name, tech)].append(alignment_path)
+    return samples_to_reads_paths
 
 
 def get_samples_regex(samples_to_reads_paths):

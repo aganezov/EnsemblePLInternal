@@ -10,6 +10,7 @@ alignment_output_dir = os.path.join(output_dir, utils.ALIGNMENTS)
 
 utils.ensure_samples_correctness(config)
 samples_to_reads_paths = utils.get_samples_to_reads_paths(config)
+samples_to_extra_alignments_paths = utils.get_extra_alignments_paths(config)
 samples_to_basename_readpaths = defaultdict(dict)
 for (sample_name, tech), read_paths in samples_to_reads_paths.items():
     for read_path in read_paths:
@@ -201,15 +202,16 @@ rule index_bam:
 
 rule merge_sorted:
     output: os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.sort.bam")
-    input: bams=aggregated_input_for_bam_merging
+    input: created_bams=aggregated_input_for_bam_merging,
+           existing_alignments=lambda wc: samples_to_extra_alignments_paths[(wc.sample, wc.tech)]
     message: "Combining sorted bam files. Requested mem {resources.mem_mb}M."
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}.sort.bam.log")
     resources:
-        mem_mb=lambda wildcards: samtools_config.get(utils.MEM_MB_CORE, 2000) + samtools_config.get(utils.MEM_MB_PER_THREAD, 1000)
+        mem_mb=lambda wildcards: samtools_config.get(utils.MEM_MB_CORE, 5000) + samtools_config.get(utils.MEM_MB_PER_THREAD, 1000)
     params:
         samtools=samtools_config.get(utils.PATH, "samtools"),
     shell:
-        "{params.samtools} merge {output} {input.bams} &> {log}"
+        "{params.samtools} merge {output} {input.created_bams} {input.existing_alignments} &> {log}"
 
 
 localrules: ensure_reads_input_extension, samtools_tmp_dir
