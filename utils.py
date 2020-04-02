@@ -107,9 +107,9 @@ def get_extra_alignments_paths(config):
             raise ValueError(
                 f"incorrect or missing tech {sample_data[TECH]} specified for sample {sample_name} in data.yaml. Only ONT or PB are supported, and tech specification is required")
         tech = sample_data[TECH].upper()
-        if EXISTING_ALIGNMENTS not in sample_data or not isinstance(sample_data[READS_PATHS], list) or len(sample_data[READS_PATHS]) < 1:
+        if EXISTING_ALIGNMENTS not in sample_data or not isinstance(sample_data[EXISTING_ALIGNMENTS], list) or len(sample_data[EXISTING_ALIGNMENTS]) < 1:
             samples_to_reads_paths[(sample_name, tech)] = []
-        for alignment_path in sample_data[READS_PATHS]:
+        for alignment_path in sample_data[EXISTING_ALIGNMENTS]:
             if not alignment_path.endswith(("bam")):
                 raise ValueError(
                     f"Unsupported extra alignment format for alignment {alignment_path}. Only 'bam' are supported")
