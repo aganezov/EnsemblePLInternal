@@ -1,5 +1,8 @@
 import os
 from collections import defaultdict
+from enum import Enum
+import logging
+from typing import Optional
 
 DEFAULT_THREAD_CNT = 99
 DEFAULT_CLUSTER_MEM_MB = 4000
@@ -55,6 +58,24 @@ MIN_INS_LENGTH = "min_ins_length"
 MAX_OUT_LENGTH = "max_out_length"
 MAX_INS_DIST = "max_ins_dist"
 MAX_LENGTH_CHANGE = "max_length_change"
+IS_MERGING = "is_merging"
+NORMALIZE_TYPES = "normalize_types"
+USE_STRANDS = "use_strands"
+USE_TYPES = "use_types"
+USE_EDIT_DISTANCE = "use_edit_distance"
+USE_END = "use_end"
+STRATEGY = "strategy"
+KD_TREE_NORM = "kd_tree_norm"
+MAX_DISTANCE_LINEAR = "max_distance_linear"
+MIN_DISTANCE = "min_distance"
+MIN_SEQ_ID = "min_seq_id"
+K_JACCARD = "k_jaccard"
+
+SV_STATS = "sv_stats"
+BINS = "bins"
+TYPES = "types"
+ABS_LENGTH = "abs_length"
+INFO_LENGTH_FIELD = "info_length_field"
 
 MEM_MB_PER_THREAD = "mem_mb_per_thread"
 MEM_MB_CORE = "mem_mb_core"
@@ -66,9 +87,17 @@ STATS = "stats"
 
 ENABLE_SV_INFERENCE = "enable_sv_inference"
 ENABLE_SV_REFINEMENT = "enable_sv_refinement"
+ENABLE_IS_MERGING = "enable_is_merging"
 
 
 EXISTING_ALIGNMENTS = "existing_alignments"
+
+
+##########
+#
+# snakemake data preparation utils
+#
+##########
 
 
 def ensure_samples_correctness(config):
@@ -167,3 +196,98 @@ def get_min_support(coverage_file, min_support_fixed_cnt, min_support_fraction):
     result = min(int(min_support_fixed_cnt), int(coverage * min_support_fraction))
     print(f"target min support cnt {result} with min support fixed cnt = {min_support_fixed_cnt} and min_support_fraction = {min_support_fraction}")
     return result
+
+##########
+#
+# SV type and length utils
+#
+##########
+
+
+class SVType(Enum):
+    INS = "INS"
+    DEL = "DEL"
+    DUP = "DUP"
+    INV = "INV"
+    TRA = "TRA"
+
+    def __str__(self) -> str:
+        return str(self.value)
+
+    def __repr__(self):
+        return str(self)
+
+    @classmethod
+    def from_str(cls, string: str) -> "SVType":
+        for entry in cls:
+            if string.lower() == entry.value.lower():
+                return entry
+        raise ValueError(f"Could not determine SVType from its supplied str version {string}")
+
+
+def get_chr_from_alt_bnd_record(bnd_string, default: str = "XXX") -> str:
+    splitter = "[" if "[" in bnd_string else "]"
+    chr_entry = [x for x in bnd_string.split(splitter) if ":" in x]
+    if len(chr_entry) < 1:
+        return default
+    return chr_entry[0].split(":")[0]
+
+
+def get_sv_type(vcf_record, info_type_field: str = "SVTYPE", info_len_field: str = "SVLEN", logger: Optional[logging.Logger] = None) -> SVType:
+    logger = logger if logger else logging.getLogger("Dummy")
+    strands = vcf_record.INFO.get("STRANDS", "??")
+    chr1 = str(vcf_record.CHROM)
+    chr2 = str(vcf_record.INFO.get("CHR2", get_chr_from_alt_bnd_record(bnd_string=vcf_record.ALT[0], default=chr1)))
+    if chr1 != chr2:
+        return SVType.TRA
+    if strands in ["--", "++"]:
+        return SVType.INV
+    if strands == "-+":
+        return SVType.DUP
+    info_svtype = vcf_record.INFO.get(info_type_field, None)
+    if info_svtype is not None:
+        if "INS" in info_svtype:
+            return SVType.INS
+        if "DEL" in info_svtype:
+            return SVType.DEL
+    coord_length = get_sv_length_from_coordinates(vcf_record)
+    if coord_length in [0, 1]:
+        return SVType.INS
+    info_length = vcf_record.INFO.get(info_len_field, None)
+    if info_length is not None and int(info_length) < 0:
+        return SVType.DEL
+    logger.warning(f"Can't determine the SV type for VCF record {str(vcf_record)}. Defaulting to DEL")
+    return SVType.DEL
+
+
+def get_sv_length_from_coordinates(vcf_record) -> int:
+    try:
+        return abs(int(vcf_record.POS) - vcf_record.INFO["END"])
+    except KeyError:
+        print(f"No END field in VCF record {str(vcf_record)}")
+
+
+def get_sv_length_from_ref_alt(vcf_record) -> int:
+    return abs(len(vcf_record.ALT[0]) - len(vcf_record.REF))
+
+
+def get_sv_length(vcf_record, abs_value: bool = True, sv_type: Optional[SVType] = None, info_len_field: str = "SVLEN", info_type_field: str = "SVTYPE") -> int:
+    """
+    0 value is reserved for TRA SVs
+    """
+    sv_type = sv_type if sv_type else get_sv_type(vcf_record=vcf_record, info_type_field=info_type_field)
+    result = 0
+    if sv_type == SVType.TRA:
+        result = 0
+    elif sv_type in [SVType.DUP, SVType.INV]:
+        result = int(vcf_record.INFO.get(info_len_field, get_sv_length_from_coordinates(vcf_record)))
+    elif sv_type == SVType.INS:
+        result = vcf_record.INFO.get(info_len_field, get_sv_length_from_ref_alt(vcf_record))
+    elif sv_type == SVType.DEL:
+        result = vcf_record.INFO.get(info_len_field, get_sv_length_from_coordinates)
+        if result > 0:
+            result *= -1
+    if abs_value:
+        result = abs(result)
+    return result
+

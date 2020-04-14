@@ -20,9 +20,56 @@ samples_regex = utils.get_samples_regex(sample_to_reads_paths)
 samtools_config = config.get(utils.TOOLS, {}).get(utils.SAMTOOLS, {})
 java_config=config.get(utils.TOOLS, {}).get(utils.JAVA, {})
 jasmine_config=config.get(utils.TOOLS, {}).get(utils.JASMINE, {})
+jasmine_is_config=jasmine_config.get(utils.IS_MERGING, {})
 iris_config=config.get(utils.TOOLS, {}).get(utils.IRIS, {})
 minimap2_config=config.get(utils.TOOLS, {}).get(utils.MINIMAP2, {})
 racon_config=config.get(utils.TOOLS, {}).get(utils.RACON, {})
+
+
+rule intra_sample_merged_specific:
+    input: os.path.join(refined_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".refined.{svtypes}ism.vcf")
+    output: os.path.join(refined_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".refined.{svtypes}ism.specific.vcf")
+    resources:
+        mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
+    shell:
+        "awk '($0 ~/^#/ || $0 ~/IS_SPECIFIC=1/)' {input} > {output}"
+
+
+rule intra_sample_merging:
+    input: vcf_list=os.path.join(refined_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".refined.{svtypes}vcf_list.txt")
+    output: os.path.join(refined_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".refined.{svtypes}ism.vcf")
+    threads: lambda wc: min(cluster_config.get("is_merging", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), jasmine_is_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
+    log: os.path.join(refined_svs_output_dir, utils.LOG, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".refined.{svtypes}ism.vcf.log")
+    resources:
+        mem_mb=lambda wildcards, threads: jasmine_config.get(utils.MEM_MB_CORE, 4000) + jasmine_config.get(utils.MEM_MB_PER_THREAD, 1000) * threads
+    params:
+        java_src=jasmine_config.get(utils.SRC_PATH, ""),
+        java=java_config.get(utils.PATH, "java"),
+        normalize_types="--normalize_type" if jasmine_is_config.get(utils.NORMALIZE_TYPES, True) else "",
+        use_types="" if jasmine_is_config.get(utils.USE_TYPES, True) else "--ignore_type",
+        use_strands="" if jasmine_is_config.get(utils.USE_STRANDS, True) else "--ignore_strand",
+        use_edit_distance="--use_edit_dist" if jasmine_is_config.get(utils.USE_EDIT_DISTANCE, False) else "",
+        use_end="--use_end" if jasmine_is_config.get(utils.USE_END, False) else "",
+        max_distance=jasmine_is_config.get(utils.MAX_DISTANCE, 200),
+        min_distance=jasmine_is_config.get(utils.MIN_DISTANCE, -1),
+        strategy="" if jasmine_is_config.get(utils.STRATEGY, "default") == "default" else ("--centroid_merging" if "centroid" in jasmine_is_config.get(utils.STRATEGY, "default") else "--clique_merging"),
+        kd_tree_norm=jasmine_is_config.get(utils.KD_TREE_NORM, 2),
+        max_dist_linear=jasmine_is_config.get(utils.MAX_DISTANCE_LINEAR, 0),
+        min_seq_id=jasmine_is_config.get(utils.MIN_SEQ_ID, 0),
+        k_jaccard=jasmine_is_config.get(utils.K_JACCARD, 9)
+    shell:
+        "{params.java} -cp {params.java_src} Main file_list={input.vcf_list} {params.normalize_types} {params.use_types} {params.use_strands} "
+        "{params.use_edit_distance} {params.strategy} threads {threads} kd_tree_norm {params.kd_tree_norm} max_dist {params.max_distance} "
+        "max_dist_linear {params.max_dist_linear} min_dist {params.min_distance} min_seq_id {params.min_seq_id} k_jaccard {params.k_jaccard} out_file={output} > {log}"
+
+rule intra_sample_merging_create_vcf_list:
+    input: os.path.join(refined_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".refined.{svtypes}vcf")
+    output: temp(os.path.join(refined_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".refined.{svtypes}vcf_list.txt"))
+    resources:
+        mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
+    run:
+        with open(output[0], "wt") as dest:
+            print(input[0], file=dest)
 
 rule specific_or_sv_types:
     input: os.path.join(refined_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".refined.vcf")

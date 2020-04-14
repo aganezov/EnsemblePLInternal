@@ -43,6 +43,20 @@ tools:
       spec_reads_fixed: 10
       spec_reads_fraction: 0.25
       spec_len: 30
+    is_merging:
+      normalize_types: True
+      use_types: True
+      use_strands: True
+      use_edit_distance: False
+      use_end: False
+      max_distance: 100
+      min_distance: -1
+      threads: 20
+      strategy: "default"
+      kd_tree_norm: 2
+      min_seq_id: 0
+      max_distance_linear: 0
+      k_jaccard: 9
   iris:
     src_path: ""
     threads: 100
@@ -56,4 +70,10 @@ tools:
     path: "minimap2"
   racon:
     path: "racon"
+  sv_stats:
+    path: "sv_stats.py"
+    bins: "1,30,50,100,150,200,350,300,500,750,1000,2000,5000,10000,50000,100000,500000"
+    types: "INS,DEL,DUP,INV,TRA"
+    abs_length: True
+    info_length_field: "SVLEN"
 
