@@ -24,9 +24,9 @@ java_config=config.get(utils.TOOLS, {}).get(utils.JAVA, {})
 sv_stats_config=config.get(utils.TOOLS, {}).get(utils.SV_STATS, {})
 
 rule raw_sv_tally:
-    input: os.path.join(raw_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "{specific}.vcf")
-    output: os.path.join(raw_svs_output_dir, utils.STATS, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "{specific}.vcf.stats.txt")
-    log: os.path.join(raw_svs_output_dir, utils.LOG, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "{specific}.vcf.stats.txt.log")
+    input: os.path.join(raw_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "{file_suffix}")
+    output: os.path.join(raw_svs_output_dir, utils.STATS, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "{file_suffix}.stats.txt")
+    log: os.path.join(raw_svs_output_dir, utils.LOG, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "{file_suffix}.stats.txt.log")
     params:
         script_path=sv_stats_config.get(utils.PATH, "sv_stats.py"),
         bins=sv_stats_config.get(utils.BINS, "1,30,50,100,150,200,350,300,500,750,1000,2000,5000,10000,50000,100000,500000"),
