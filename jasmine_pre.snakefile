@@ -59,8 +59,8 @@ rule intra_sample_merging:
         k_jaccard=jasmine_is_config.get(utils.K_JACCARD, 9)
     shell:
         "{params.java} -cp {params.java_src} Main file_list={input.vcf_list} {params.normalize_types} {params.use_types} {params.use_strands} "
-        "{params.use_edit_distance} {params.strategy} threads {threads} kd_tree_norm {params.kd_tree_norm} max_dist {params.max_distance} "
-        "max_dist_linear {params.max_dist_linear} min_dist {params.min_distance} min_seq_id {params.min_seq_id} k_jaccard {params.k_jaccard} out_file={output} > {log}"
+        "{params.use_edit_distance} {params.strategy} threads={threads} kd_tree_norm={params.kd_tree_norm} max_dist={params.max_distance} "
+        "max_dist_linear={params.max_dist_linear} min_dist={params.min_distance} min_seq_id={params.min_seq_id} k_jaccard={params.k_jaccard} out_file={output} > {log}"
 
 rule intra_sample_merging_create_vcf_list:
     input: os.path.join(refined_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".refined.{svtypes}vcf")
