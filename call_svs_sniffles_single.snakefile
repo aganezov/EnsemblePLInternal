@@ -34,7 +34,7 @@ rule raw_sv_tally:
         abs_length="" if sv_stats_config.get(utils.ABS_LENGTH, True) else "--no-abs-length",
         info_len_field=sv_stats_config.get(utils.INFO_LENGTH_FIELD, "SVLEN")
     shell:
-         "python {params.script_path} {input} -o {output} --bins {params.bins} --types {params.types} {params.abs_length} --info-len-field {params.info_len_field} > {log}"
+         "python {params.script_path} {input} -o {output} --bins {params.bins} --types {params.types} {params.abs_length} --info-len-field {params.info_len_field} &> {log}"
 
 
 rule get_raw_specific:
