@@ -40,7 +40,7 @@ for (sample, tech) in sample_to_reads_paths.keys():
                 overall_expected_files.append(os.path.join(refined_svs_output_dir, f"{sample}_{tech}_{sv_tool}.{suffix}refined.nSVtypes.vcf"))
                 overall_expected_files.append(os.path.join(refined_svs_output_dir, f"{sample}_{tech}_{sv_tool}.{suffix}refined.specific.vcf"))
                 overall_expected_files.append(os.path.join(refined_svs_output_dir, f"{sample}_{tech}_{sv_tool}.{suffix}refined.vcf"))
-                if conig.get(ENABLE_IS_MERGING, True):
+                if config.get(ENABLE_IS_MERGING, True):
                     overall_expected_files.append(os.path.join(refined_svs_output_dir, f"{sample}_{tech}_{sv_tool}.{suffix}refined.nSVtypes.ism.vcf"))
                     overall_expected_files.append(os.path.join(refined_svs_output_dir, f"{sample}_{tech}_{sv_tool}.{suffix}refined.nSVtypes.ism.specific.vcf"))
 
