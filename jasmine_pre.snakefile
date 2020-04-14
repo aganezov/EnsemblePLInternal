@@ -205,6 +205,6 @@ rule create_first_vcf_file_list:
         with open(output[0], "wt") as dest:
             print(input[0], file=dest)
 
-localrules: create_first_vcf_file_list, create_bam_file_list, specific_or_sv_types, specific_new_sv_types
+localrules: create_first_vcf_file_list, create_bam_file_list, specific_or_sv_types, specific_new_sv_types, intra_sample_merged_specific
 
 include: "call_svs_sniffles_single.snakefile"
