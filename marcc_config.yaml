@@ -56,3 +56,10 @@ refined_sensitive_new_sv_types:
   nCPUs: 24
   mem_md: "{resources.mem_mb}"
   name: "jasmine_pre.{rule}.{wildcards}"
+
+intra_sample_merging:
+  time: "24:0:0"
+  partition: "parallel,lrgmem,shared"
+  nCPUs: 24
+  mem_md: "{resources.mem_mb}"
+  name: "{jasmine_pre.{rule}.{wildcards}}"

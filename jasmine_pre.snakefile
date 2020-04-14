@@ -38,7 +38,7 @@ rule intra_sample_merged_specific:
 rule intra_sample_merging:
     input: vcf_list=os.path.join(refined_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".refined.{svtypes}vcf_list.txt")
     output: os.path.join(refined_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".refined.{svtypes}ism.vcf")
-    threads: lambda wc: min(cluster_config.get("is_merging", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), jasmine_is_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
+    threads: lambda wc: min(cluster_config.get("intra_sample_merging", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), jasmine_is_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
     log: os.path.join(refined_svs_output_dir, utils.LOG, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".refined.{svtypes}ism.vcf.log")
     resources:
         mem_mb=lambda wildcards, threads: jasmine_config.get(utils.MEM_MB_CORE, 4000) + jasmine_config.get(utils.MEM_MB_PER_THREAD, 1000) * threads

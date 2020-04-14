@@ -51,7 +51,7 @@ tools:
       use_end: False
       max_distance: 100
       min_distance: -1
-      threads: 20
+      threads: 100
       strategy: "default"
       kd_tree_norm: 2
       min_seq_id: 0
