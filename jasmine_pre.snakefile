@@ -30,6 +30,8 @@ rule sv_tally:
     input: os.path.join(refined_svs_output_dir, "{file}")
     output: os.path.join(refined_svs_output_dir, utils.STATS, "{file}.stats.txt")
     log: os.path.join(raw_svs_output_dir, utils.LOG, "{file}.stats.txt.log")
+    resources:
+        mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
     params:
         script_path=sv_stats_config.get(utils.PATH, "sv_stats.py"),
         bins=sv_stats_config.get(utils.BINS, "1,30,50,100,150,200,350,300,500,750,1000,2000,5000,10000,50000,100000,500000"),
