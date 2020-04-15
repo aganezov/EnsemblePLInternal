@@ -254,7 +254,7 @@ def get_sv_type(vcf_record, info_type_field: str = "SVTYPE", info_len_field: str
     if coord_length in [0, 1]:
         return SVType.INS
     info_length = vcf_record.INFO.get(info_len_field, None)
-    if info_length is not None and int(info_length) < 0:
+    if info_length is not None and int(float(info_length)) < 0:
         return SVType.DEL
     logger.warning(f"Can't determine the SV type for VCF record {str(vcf_record)}. Defaulting to DEL")
     return SVType.DEL
@@ -280,11 +280,11 @@ def get_sv_length(vcf_record, abs_value: bool = True, sv_type: Optional[SVType] 
     if sv_type == SVType.TRA:
         result = 0
     elif sv_type in [SVType.DUP, SVType.INV]:
-        result = int(vcf_record.INFO.get(info_len_field, get_sv_length_from_coordinates(vcf_record)))
+        result = int(float(vcf_record.INFO.get(info_len_field, get_sv_length_from_coordinates(vcf_record))))
     elif sv_type == SVType.INS:
-        result = vcf_record.INFO.get(info_len_field, get_sv_length_from_ref_alt(vcf_record))
+        result = int(float(vcf_record.INFO.get(info_len_field, get_sv_length_from_ref_alt(vcf_record))))
     elif sv_type == SVType.DEL:
-        result = vcf_record.INFO.get(info_len_field, get_sv_length_from_coordinates)
+        result = int(float(vcf_record.INFO.get(info_len_field, get_sv_length_from_coordinates)))
         if result > 0:
             result *= -1
     if abs_value:
