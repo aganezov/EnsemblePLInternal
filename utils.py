@@ -71,7 +71,7 @@ MIN_DISTANCE = "min_distance"
 MIN_SEQ_ID = "min_seq_id"
 K_JACCARD = "k_jaccard"
 
-SV_STATS = "sv_stats"
+SV_SIZES = "sv_sizes"
 BINS = "bins"
 TYPES = "types"
 ABS_LENGTH = "abs_length"

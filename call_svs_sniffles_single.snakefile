@@ -21,20 +21,20 @@ jasmine_config=config.get(utils.TOOLS, {}).get(utils.JASMINE, {})
 iris_config=config.get(utils.TOOLS, {}).get(utils.IRIS, {})
 tech_regex = utils.get_tech_regex(config)
 java_config=config.get(utils.TOOLS, {}).get(utils.JAVA, {})
-sv_stats_config=config.get(utils.TOOLS, {}).get(utils.SV_STATS, {})
+sv_sizes_config=config.get(utils.TOOLS, {}).get(utils.SV_SIZES, {})
 
 rule raw_sv_tally:
     input: os.path.join(raw_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "{file_suffix}")
-    output: os.path.join(raw_svs_output_dir, utils.STATS, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "{file_suffix}.stats.txt")
-    log: os.path.join(raw_svs_output_dir, utils.LOG, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "{file_suffix}.stats.txt.log")
+    output: os.path.join(raw_svs_output_dir, utils.STATS, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "{file_suffix}.stats.sizes.txt")
+    log: os.path.join(raw_svs_output_dir, utils.LOG, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "{file_suffix}.stats.sizes.txt.log")
     resources:
         mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
     params:
-        script_path=sv_stats_config.get(utils.PATH, "sv_stats.py"),
-        bins=sv_stats_config.get(utils.BINS, "1,30,50,100,150,200,350,300,500,750,1000,2000,5000,10000,50000,100000,500000"),
-        types=sv_stats_config.get(utils.TYPES, "INS,DEL,DUP,INV,TRA"),
-        abs_length="" if sv_stats_config.get(utils.ABS_LENGTH, True) else "--no-abs-length",
-        info_len_field=sv_stats_config.get(utils.INFO_LENGTH_FIELD, "SVLEN")
+        script_path=sv_sizes_config.get(utils.PATH, "sv_sizes.py"),
+          bins=sv_sizes_config.get(utils.BINS, "1,30,50,100,150,200,350,300,500,750,1000,2000,5000,10000,50000,100000,500000"),
+          types=sv_sizes_config.get(utils.TYPES, "INS,DEL,DUP,INV,TRA"),
+          abs_length="" if sv_sizes_config.get(utils.ABS_LENGTH, True) else "--no-abs-length",
+          info_len_field=sv_sizes_config.get(utils.INFO_LENGTH_FIELD, "SVLEN")
     shell:
          "python {params.script_path} {input} -o {output} --bins {params.bins} --types {params.types} {params.abs_length} --info-len-field {params.info_len_field} &> {log}"
 
