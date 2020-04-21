@@ -49,7 +49,7 @@ def main():
     for cnt, record in enumerate(reader):
         sv_type = utils.get_sv_type(vcf_record=record, info_type_field=args.info_type_field, info_len_field=args.info_len_field, logger=logger)
         sv_length = utils.get_sv_length(record, sv_type=sv_type, abs_value=args.abs_length, info_len_field=args.info_len_field, info_type_field=args.info_type_field)
-        bin_index = bisect.bisect_left(bins, sv_length)
+        bin_index = bisect.bisect_right(bins, sv_length)
         if bin_index < 1:
             logger.error(f"Something is wrong with length bin determination for record {str(record)} with type {str(sv_type)}")
         if sv_type not in bin_counts[bins[bin_index - 1]]:
@@ -63,7 +63,7 @@ def main():
         print(",".join(map(str, header)), file=args.output)
     if args.out_indiv_bins:
         for lv, rv in zip(bins[:-1], bins[1:]):
-            bin_str_value = f"{bin_string_repr(lv)} - {bin_string_repr(rv)}"
+            bin_str_value = f"[{bin_string_repr(lv)} - {bin_string_repr(rv)})"
             sv_type_values = [bin_counts[lv][sv_type] for sv_type in types]
             bin_total = sum(sv_type_values)
             result = f"{bin_str_value}," + ",".join(map(str, sv_type_values))
