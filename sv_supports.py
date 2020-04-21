@@ -15,6 +15,7 @@ def main():
     parser.add_argument("-o", "--output", default=sys.stdout, type=argparse.FileType("wt"))
     parser.add_argument("--no-out-header", dest="out_header", action="store_false")
     parser.add_argument("--no-out-total-b", dest="out_total_bins", action="store_false")
+    parser.add_argument("--no-out-type", dest="out_indiv_types", action="store_false")
     parser.add_argument("--types", type=str, default="INS,DEL,DUP,INV,TRA")
     parser.add_argument("--info-support-field", type=str, default="RE")
     parser.add_argument("--info-reads-field", type=str, default="RNAMES")
@@ -48,7 +49,9 @@ def main():
         if sv_type not in bin_counts[bins[bin_index - 1]]:
             continue
         bin_counts[bins[bin_index - 1]][sv_type] += 1
-    header = ["bin"] + types
+    header = ["bin"]
+    if args.out_indiv_types:
+        header += types
     if args.out_total_bins:
         header += ["total"]
     if args.out_header:
@@ -60,7 +63,9 @@ def main():
             sv_type_values.append(type_totals[sv_type])
             type_totals[sv_type] -= bin_counts[bin_value][sv_type]
         bin_total = sum(sv_type_values)
-        result = f"{bin_value}," + ",".join(map(str, sv_type_values))
+        result = f"{bin_value}"
+        if args.out_indiv_types:
+             result += "," + ",".join(map(str, sv_type_values))
         if args.out_total_bins:
             result += f",{bin_total}"
         print(result, file=args.output)
