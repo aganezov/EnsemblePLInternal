@@ -291,3 +291,12 @@ def get_sv_length(vcf_record, abs_value: bool = True, sv_type: Optional[SVType] 
         result = abs(result)
     return result
 
+
+def get_sv_support_cnt(vcf_record, info_re_field: str = "RE", info_reads_field: str = "RNAMES") -> int:
+    re_value = int(vcf_record.INFO.get(info_re_field, 0))
+    if re_value != 0:
+        return re_value
+    reads = vcf_record.INFO.get(info_reads_field, "").split(",")
+    if len(reads) > 1 or len(reads[0]) > 0:
+        return len(reads)
+    return 0
