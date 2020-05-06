@@ -116,7 +116,7 @@ rule clear_corrupt_sam_alignments:
     resources:
         mem_mb=lambda wildcards, threads: samtools_config.get(utils.MEM_MB_CORE, 2000) + samtools_config.get(utils.MEM_MB_PER_THREAD, 1000) * threads
     params:
-        command=lambda wc: f"python {config.get('tools', {}).get('sam_fix', {}).get('path', 'sam_fix.py')}" if config.get(utils.ALIGNER, "ngmlr") else "cat"
+        command=lambda wc: f"python {config.get('tools', {}).get('sam_fix', {}).get('path', 'fix_sam.py')}" if config.get(utils.ALIGNER, "ngmlr") else "cat"
     shell:
         "{params.command} {input} > {output} 2> {log}"
 
