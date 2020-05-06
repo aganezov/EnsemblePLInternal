@@ -108,16 +108,17 @@ rule single_sam_to_sort_bam:
     shell:
         "{params.samtools} sort -O bam -o {output} -@ {threads} -m {params.mem_mb_per_thread}M -T {params.tmp_dir} {input.sam} &> {log}"
 
-rule fix_full_soft_clip_for_very_long_reads:
+rule clear_corrupt_sam_alignments:
     output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}" + "_{chunk_id,[a-z]+}.fixed.sam"))
     input: os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format,(fastq|fasta)}" + "_{chunk_id}.sam")
+    log: os.path.join(alignment_output_dir, utils.LOG, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}" + "_{chunk_id,[a-z]+}.fixed.sam.log")
     threads: 1
     resources:
         mem_mb=lambda wildcards, threads: samtools_config.get(utils.MEM_MB_CORE, 2000) + samtools_config.get(utils.MEM_MB_PER_THREAD, 1000) * threads
     params:
-        command=lambda wc: f"{sed_config.get(utils.PATH, 'sed')} -E '/\\t[0-9]+S\\t/d'" if config.get(utils.ALIGNER, "ngmlr") else "cat"
+        command=lambda wc: f"python {config.get('tools', {}).get('sam_fix', {}).get('path', 'sam_fix.py')}" if config.get(utils.ALIGNER, "ngmlr") else "cat"
     shell:
-        "{params.command} {input} > {output}"
+        "{params.command} {input} > {output} 2> {log}"
 
 rule single_alignment:
     output:temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}" + "_{chunk_id,[a-z]+}.sam"))

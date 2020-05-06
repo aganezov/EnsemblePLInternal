@@ -76,4 +76,6 @@ tools:
     types: "INS,DEL,DUP,INV,TRA"
     abs_length: True
     info_length_field: "SVLEN"
+  sam_fix:
+    path: "fix_sam.py"
 
