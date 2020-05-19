@@ -78,4 +78,6 @@ tools:
     info_length_field: "SVLEN"
   sam_fix:
     path: "fix_sam.py"
+  seqtk:
+    path: "seqtk"
 

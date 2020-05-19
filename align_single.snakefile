@@ -22,6 +22,7 @@ samtools_config = config.get(utils.TOOLS, {}).get(utils.SAMTOOLS, {})
 sed_config = config.get(utils.TOOLS, {}).get("sed", {})
 awk_config = config.get(utils.TOOLS, {}).get(utils.AWK, {})
 minimap2_config=config.get(utils.TOOLS, {}).get(utils.MINIMAP2, {})
+seqtk_config = config.get(utils.TOOLS, {}).get(utils.SEQTK, {})
 
 samples_regex = utils.get_samples_regex(samples_to_reads_paths)
 read_paths_regex = utils.get_reads_paths_regex(samples_to_reads_paths)
@@ -183,8 +184,9 @@ checkpoint split_fasta:
         zcat_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta.gz", "fa.gz"))) == 0 else "<(zcat {fasta_gz})".format(fasta_gz=" ".join(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta.gz", "fa.gz")))),
         prefix=lambda wc: os.path.join(alignment_output_dir, f"{wc.sample}_{wc.tech}_fasta", f"{wc.sample}_{wc.tech}_fasta_"),
         fasta_cnt=lambda wc: ngmlr_config.get(utils.READS_CNT_PER_RUN, 200000) * 2,
+        seqtk_command=lambda wc: seqtk_config.get(utils.PATH, "seqtk"),
     shell:
-        "mkdir -p {output} && cat {params.cut_command} {params.zcat_command} | split -l {params.fasta_cnt} -a 3 - {params.prefix}"
+        "mkdir -p {output} && cat {params.cut_command} {params.zcat_command} | seqtk seq - | split -l {params.fasta_cnt} -a 3 - {params.prefix}"
 
 rule samtools_tmp_dir:
     output: temp(directory(os.path.join(config["tools"].get(utils.TMP_DIR, ""), "samtools_tmp_{sample}_{tech}_{seq_format}_{chunk_id}")))

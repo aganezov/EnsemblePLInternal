@@ -18,6 +18,7 @@ SAMTOOLS = "samtools"
 ALIGNER = "aligner"
 
 AWK = "awk"
+SEQTK = "seqtk"
 NGMLR = "ngmlr"
 PATH = "path"
 TMP_DIR = "tmp_dir"
