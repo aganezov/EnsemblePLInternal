@@ -178,8 +178,8 @@ rule refined_sensitive_new_sv_types:
     shell:
         "{params.java} -cp {params.java_src} Main file_list={input.vcf_file_list} --run_iris --preprocess_only genome_file={params.ref_genome} bam_list={input.bam_file_list} "
         "--iris_args=minimap_path={params.minimap2},racon_path={params.racon},samtools_path={params.samtools},threads={threads},out_dir={params.iris_output_dir},"
-        "min_ins_length={params.min_ins_length},max_out_length={params.max_out_length},max_ins_dist={params.max_ins_dist},max_length_change={params.max_length_change},--keep_long_variants "
-        "out_dir={params.output_dir} out_file=test.vcf &> {log}"
+        "min_ins_length={params.min_ins_length},max_out_length={params.max_out_length},max_ins_dist={params.max_ins_dist},max_length_change={params.max_length_change},--keep_long_variants,"
+        "--resume out_dir={params.output_dir} out_file=test.vcf &> {log}"
 
 
 rule create_bam_file_list:
