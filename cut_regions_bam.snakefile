@@ -11,6 +11,13 @@ for path in config["bams"]:
     files.append(os.path.join(out_dir, f"{base}.{suffix}.bam"))
     files.append(os.path.join(out_dir, f"{base}.{suffix}.bam.bai"))
 
+regions = []
+with open(config["regions"], "rt") as source:
+    for line in source:
+        data = line.strip().split("\t")
+        regions.append(f"{data[0]}:{data[1]}-{data[2]}")
+regions = " ".join(regions)
+
 
 rule all:
     input: files
@@ -25,7 +32,8 @@ rule index_bam:
 
 rule create_cut_bam:
     output: os.path.join(out_dir, "{base}.{suffix," + suffix + "}.bam")
-    input: bam=lambda wc: input_by_base[wc.base],
-           bed=config["regions"]
+    input: bam=lambda wc: input_by_base[wc.base]
+    params:
+        regions=regions,
     shell:
-        "bedtools intersect -abam {input.bam} -b {input.bed} > {output}"
+        "samtools view -O bam -o {output} {input} {params.regions}"
