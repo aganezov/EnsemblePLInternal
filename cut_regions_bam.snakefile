@@ -36,7 +36,7 @@ rule sort_cut_bam:
         "samtools sort -@ 4 -O bam -o {output} {input}"
 
 rule create_cut_bam:
-    output: os.path.join(out_dir, "{base}.{suffix," + suffix + "}.bam")
+    output: temp(os.path.join(out_dir, "{base}.{suffix," + suffix + "}.bam"))
     input: bam=lambda wc: input_by_base[wc.base]
     params:
         regions=regions,
