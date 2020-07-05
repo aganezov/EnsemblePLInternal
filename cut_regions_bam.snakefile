@@ -8,8 +8,8 @@ for path in config["bams"]:
     basename = os.path.basename(path)
     base = os.path.splitext(basename)[0]
     input_by_base[base] = path
-    files.append(os.path.join(out_dir, f"{base}.{suffix}.bam"))
-    files.append(os.path.join(out_dir, f"{base}.{suffix}.bam.bai"))
+    files.append(os.path.join(out_dir, f"{base}.{suffix}.sort.bam"))
+    files.append(os.path.join(out_dir, f"{base}.{suffix}.sort.bam.bai"))
 
 regions = []
 with open(config["regions"], "rt") as source:
