@@ -24,11 +24,16 @@ rule all:
 
 
 rule index_bam:
-    output: os.path.join(out_dir, "{base}.{suffix," + suffix + "}.bam.bai")
-    input: os.path.join(out_dir, "{base}.{suffix}.bam")
+    output: os.path.join(out_dir, "{base}.{suffix," + suffix + "}.sort.bam.bai")
+    input: os.path.join(out_dir, "{base}.{suffix}.sort.bam")
     shell:
         "samtools index {input}"
 
+rule sort_cut_bam:
+    output: os.path.join(out_dir, "{base}.{suffix," + suffix+ "}.sort.bam")
+    input: os.path.join(out_dir, "{base}.{suffix}.sort.bam")
+    shell:
+        "samtools sort -@ 4 -O bam -o {output} {input}"
 
 rule create_cut_bam:
     output: os.path.join(out_dir, "{base}.{suffix," + suffix + "}.bam")
