@@ -118,9 +118,20 @@ rule specific_new_sv_types:
     shell:
         "awk '($0 ~/^#/ || $0 ~/IS_SPECIFIC=1/)' {input} > {output}"
 
-rule normalize_sv_types:
+rule normalize_sv_types_nSVtypes:
     output: os.path.join(refined_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".refined.nSVtypes.norm.vcf")
     input: os.path.join(refined_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".refined.nSVtypes.vcf"),
+    resources:
+        mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
+    params:
+        java_src=":".join(x for x in [jasmine_config.get(utils.SRC_PATH, ""), iris_config.get(utils.SRC_PATH, "")] if len(x) > 0),
+        java=java_config.get(utils.PATH, "java"),
+    shell:
+        "{params.java} -cp {params.java_src} Main --preprocess_only --pre_normalize --comma_filelist file_list={input} out_file={output}"
+
+rule normalize_sv_types_oSVtypes:
+    output: os.path.join(refined_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".refined.norm.vcf")
+    input: os.path.join(refined_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".refined.vcf"),
     resources:
         mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
     params:
