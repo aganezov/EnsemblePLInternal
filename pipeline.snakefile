@@ -39,10 +39,12 @@ for (sample, tech) in sample_to_reads_paths.keys():
                 overall_expected_files.append(os.path.join(refined_svs_output_dir, f"{sample}_{tech}_{sv_tool}.{suffix}refined.nSVtypes.specific.vcf"))
                 overall_expected_files.append(os.path.join(refined_svs_output_dir, utils.STATS, f"{sample}_{tech}_{sv_tool}.{suffix}refined.nSVtypes.specific.vcf.stats.sizes.txt"))
                 overall_expected_files.append(os.path.join(refined_svs_output_dir, f"{sample}_{tech}_{sv_tool}.{suffix}refined.nSVtypes.vcf"))
+                overall_expected_files.append(os.path.join(refined_svs_output_dir, f"{sample}_{tech}_{sv_tool}.{suffix}refined.nSVtypes.norm.vcf"))
                 overall_expected_files.append(os.path.join(refined_svs_output_dir, utils.STATS, f"{sample}_{tech}_{sv_tool}.{suffix}refined.nSVtypes.vcf.stats.sizes.txt"))
                 overall_expected_files.append(os.path.join(refined_svs_output_dir, f"{sample}_{tech}_{sv_tool}.{suffix}refined.specific.vcf"))
                 overall_expected_files.append(os.path.join(refined_svs_output_dir, utils.STATS, f"{sample}_{tech}_{sv_tool}.{suffix}refined.specific.vcf.stats.sizes.txt"))
                 overall_expected_files.append(os.path.join(refined_svs_output_dir, f"{sample}_{tech}_{sv_tool}.{suffix}refined.vcf"))
+                overall_expected_files.append(os.path.join(refined_svs_output_dir, f"{sample}_{tech}_{sv_tool}.{suffix}refined.norm.vcf"))
                 overall_expected_files.append(os.path.join(refined_svs_output_dir, utils.STATS, f"{sample}_{tech}_{sv_tool}.{suffix}refined.vcf.stats.sizes.txt"))
                 if config.get(utils.ENABLE_IS_MERGING, True):
                     overall_expected_files.append(os.path.join(refined_svs_output_dir, f"{sample}_{tech}_{sv_tool}.{suffix}refined.nSVtypes.ism.vcf"))

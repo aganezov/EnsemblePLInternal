@@ -10,6 +10,7 @@ svs_output_dir = os.path.join(output_dir, utils.SVS)
 raw_svs_output_dir = os.path.join(svs_output_dir, utils.RAW)
 refined_svs_output_dir = os.path.join(svs_output_dir, utils.REFINED)
 ins_to_dup_output_dir = os.path.join(refined_svs_output_dir, utils.INS_TO_DUP)
+normalize_sv_types_output_dir = os.path.join(refined_svs_output_dir, utils.NORM_SV)
 iris_refined_output_dir = os.path.join(refined_svs_output_dir, utils.IRIS_REFINED)
 specific_marked_output_dir = os.path.join(refined_svs_output_dir, utils.SPECIFIC_MARKED)
 
@@ -73,7 +74,7 @@ rule intra_sample_merging:
         max_dist_linear=jasmine_is_config.get(utils.MAX_DISTANCE_LINEAR, 0),
         min_seq_id=jasmine_is_config.get(utils.MIN_SEQ_ID, 0),
         k_jaccard=jasmine_is_config.get(utils.K_JACCARD, 9)
-    shell:
+    shell:  
         "{params.java} -cp {params.java_src} Main file_list={input.vcf_list} {params.normalize_types} {params.use_types} {params.use_strands} "
         "{params.use_edit_distance} {params.strategy} threads={threads} kd_tree_norm={params.kd_tree_norm} max_dist={params.max_distance} --allow_intrasample "
         "max_dist_linear={params.max_dist_linear} min_dist={params.min_distance} min_seq_id={params.min_seq_id} k_jaccard={params.k_jaccard} out_file={output} > {log}"
@@ -116,6 +117,18 @@ rule specific_new_sv_types:
         mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
     shell:
         "awk '($0 ~/^#/ || $0 ~/IS_SPECIFIC=1/)' {input} > {output}"
+
+rule normalize_sv_types:
+    output: os.path.join(refined_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".refined.nSVtypes.norm.vcf")
+    input: os.path.join(refined_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".refined.nSVtypes.vcf"),
+    resources:
+        mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
+    params:
+        java_src=":".join(x for x in [jasmine_config.get(utils.SRC_PATH, ""), iris_config.get(utils.SRC_PATH, "")] if len(x) > 0),
+        java=java_config.get(utils.PATH, "java"),
+    shell:
+        "{params.java} -cp {params.java_src} Main --preprocess_only --pre_normalize --comma_filelist file_list={input} out_file={output}"
+
 
 rule spec_marked_sensitive_new_sv_type_final_location:
     input: os.path.join(specific_marked_output_dir, "{sample}_{tech}_sniffles", "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "_dupToIns_irisRefined_markedSpec.vcf")
