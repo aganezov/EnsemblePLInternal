@@ -37,9 +37,8 @@ def split_fastx_dirs(wildcards):
         result.append(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fastq"))
     return result
 
-rule merged_coverage:
+rule merged_average_coverage_samtools:
     input: bam=os.path.join(alignment_output_dir, "{sample}_{tech}.sort.bam"),
-           tmp_fastq_dir=split_fastx_dirs,
     output: os.path.join(alignment_output_dir, utils.STATS, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.coverage.txt")
     message: "Computing average alignment read depth coverage on {input}"
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}.coverage.txt.log")
