@@ -51,7 +51,7 @@ rule merged_coverage_mosdepth:
         per_base=lambda wc: "" if bool(mosdepth_config.get(utils.PER_BASE, False)) else "-n",
         fast_mode=lambda wc: "--fast-mode" if bool(mosdepth_config.get(utils.FAST_MODE, True)) else "",
         window_size=mosdepth_config.get(utils.WINDOW_SIZE, 500),
-        prefix=lambda wc: os.path.join(alignment_output_dir, utils.STATS, f"{wc.sample}_{wc.tech}.mosdepth.global.dist.txt")
+        prefix=lambda wc: os.path.join(alignment_output_dir, utils.STATS, f"{wc.sample}_{wc.tech}"),
     shell:
         "{params.mosdepth} {params.per_base} {params.fast_mode} --by {params.window_size} -t {threads} {params.prefix} {input}"
 
