@@ -94,7 +94,7 @@ def read_extensions_per_sample(sample, tech):
 
 def aggregated_input_for_bam_merging(wildcards):
     extensions = read_extensions_per_sample(sample=wildcards.sample, tech=wildcards.tech)
-    assert "fasta" in extensions or "fastq" in extensions
+    # assert "fasta" in extensions or "fastq" in extensions
     result = []
     if "fasta" in extensions:
         chekpoint_output = checkpoints.split_fasta.get(**wildcards).output[0]
