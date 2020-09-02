@@ -68,4 +68,4 @@ intra_sample_merging:
   partition: "parallel,lrgmem,shared"
   nCPUs: 24
   mem_md: "{resources.mem_mb}"
-  name: "{jasmine_pre.{rule}.{wildcards}}"
+  name: "{jasmine_pre.{rule}.{wildcards}"
