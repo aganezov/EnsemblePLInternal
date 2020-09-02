@@ -85,3 +85,6 @@ tools:
     mem_mb_per_thread: 1000
     mem_mb_core: 2000
     threads: 100
+    paer_base: False
+    fast_mode: True
+    window_size: 500
