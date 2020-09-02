@@ -128,6 +128,8 @@ def get_samples_to_reads_paths(config):
                 if not read_path.endswith(("fastq", "fq", "fastq.gz", "fq.gz", "fasta", "fasta.gz", "fa", "fa.gz")):
                     raise ValueError(f"Unsupported input format for read path {read_path}. Only 'fastq', 'fq', 'fastq.gz', 'fq.gz', 'fasta', 'fasta.gz', 'fa', and 'fa.gz' are supported")
                 samples_to_reads_paths[(sample_name, tech)].append(read_path)
+        else:
+            samples_to_reads_paths[(sample_name, tech)].append("")
     return samples_to_reads_paths
 
 
