@@ -90,7 +90,7 @@ rule sensitive_svs_sniffles:
         min_length = sniffles_config.get(utils.MIN_LENGTH, 20),
         min_support = sniffles_config.get(utils.MIN_SUPPORT, 2),
         max_num_splits = sniffles_config.get(utils.MAX_NUM_SPLIT_READS, 10),
-        max_distance = sniffles_config.get(utils.MAX_DISTANCE, 1000),
+        max_distance = sniffles_config.get(utils.MAX_DISTANCE, 50),
         num_reads_report = sniffles_config.get(utils.NUM_READS_REPORT, -1),
         min_seq_size = sniffles_config.get(utils.MIN_SEQ_SIZE, 1000)
     shell:

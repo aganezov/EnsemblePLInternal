@@ -23,7 +23,7 @@ tools:
     min_support: 2
     min_length: 20
     max_num_splits: 10
-    max_distance: 1000
+    max_distance: 50
     num_reads_report: -1
     min_seq_size: 1000
     time: "24:0:0"
