@@ -19,6 +19,7 @@ utils.ensure_ref_correctness(config)
 
 ngmlr_config = config.get(utils.TOOLS, {}).get(utils.NGMLR, {})
 samtools_config = config.get(utils.TOOLS, {}).get(utils.SAMTOOLS, {})
+mosdepth_config = config.get(utils.TOOLS, {}).get(utils.MOSDEPTH, {})
 sed_config = config.get(utils.TOOLS, {}).get("sed", {})
 awk_config = config.get(utils.TOOLS, {}).get(utils.AWK, {})
 minimap2_config=config.get(utils.TOOLS, {}).get(utils.MINIMAP2, {})
@@ -36,6 +37,24 @@ def split_fastx_dirs(wildcards):
     if "fastq" in extensions:
         result.append(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fastq"))
     return result
+
+rule merged_coverage_mosdepth:
+    input: bam=os.path.join(alignment_output_dir, "{sample}_{tech}.sort.bam"),
+    output: os.path.join(alignment_output_dir, utils.STATS, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.mosdepth.global.dist.txt")
+    message: "Computing mosdepth coverage stats on {input}"
+    threads: lambda wildcards: min(cluster_config.get("merged_coverage_mosdepth", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), mosdepth_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
+    log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}.mosdepth.txt.log")
+    resources:
+        mem_mb=lambda wildcards, threads: mosdepth_config.get(utils.MEM_MB_CORE, 2000) + mosdepth_config.get(utils.MEM_MB_PER_THREAD, 1000) * threads
+    params:
+        mosdepth=mosdepth_config.get(utils.PATH, "mosdepth"),
+        per_base=lambda wc: "" if bool(mosdepth_config.get(utils.PER_BASE, False)) else "-n",
+        fast_mode=lambda wc: "--fast-mode" if bool(mosdepth_config.get(utils.FAST_MODE, True)) else "",
+        window_size=mosdepth_config.get(utils.WINDOW_SIZE, 500),
+        prefix=lambda wc: os.path.join(alignment_output_dir, utils.STATS, f"{wc.sample}_{wc.tech}.mosdepth.global.dist.txt")
+    shell:
+        "{params.mosdepth} {params.per_base} {params.fast_mode} --by {params.window_size} -t {threads} {params.prefix} {input}"
+
 
 rule merged_average_coverage_samtools:
     input: bam=os.path.join(alignment_output_dir, "{sample}_{tech}.sort.bam"),

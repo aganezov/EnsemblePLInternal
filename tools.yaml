@@ -80,4 +80,8 @@ tools:
     path: "fix_sam.py"
   seqtk:
     path: "seqtk"
-
+  mosdepth:
+    path: "mosdepth"
+    mem_mb_per_thread: 1000
+    mem_mb_core: 2000
+    threads: 100

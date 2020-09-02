@@ -16,6 +16,7 @@ TOOLS = "tools"
 THREADS = "threads"
 SAMTOOLS = "samtools"
 ALIGNER = "aligner"
+MOSDEPTH = "mosdepth"
 
 AWK = "awk"
 SEQTK = "seqtk"

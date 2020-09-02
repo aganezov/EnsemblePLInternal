@@ -30,10 +30,16 @@ merge_sorted:
   mem_mb: "{resources.mem_mb}"
   name: "samtools.{rule}.{wildcards}"
 
-merged_coverage:
+merged_average_coverage_samtools:
   time: "24:0:0"
   partition: "shared,parallel,lrgmem"
   nCPUs: 1
+  name: "samtools.{rule}.{wildcards}"
+
+merged_coverage_mosdepth:
+  time: "24:0:0"
+  partition: "shared,parallel,lrgmem"
+  nCPUs: 24
   name: "samtools.{rule}.{wildcards}"
 
 sensitive_svs_sniffles:
