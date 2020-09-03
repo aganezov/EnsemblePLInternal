@@ -123,7 +123,7 @@ rule normalize_sv_types_nSVtypes:
     input: os.path.join(refined_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".refined.nSVtypes.vcf"),
     log: os.path.join(refined_svs_output_dir, utils.LOG, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".refined.nSVtypes.norm.vcf.log")
     resources:
-        mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
+        mem_mb=lambda wildcards, threads: jasmine_config.get(utils.MEM_MB_CORE, 20000) + jasmine_config.get(utils.MEM_MB_PER_THREAD, 1000) * threads
     params:
         java_src=":".join(x for x in [jasmine_config.get(utils.SRC_PATH, ""), iris_config.get(utils.SRC_PATH, "")] if len(x) > 0),
         java=java_config.get(utils.PATH, "java"),
@@ -136,7 +136,7 @@ rule normalize_sv_types_oSVtypes:
     input: os.path.join(refined_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".refined.vcf"),
     log: os.path.join(refined_svs_output_dir, utils.LOG, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".refined.norm.vcf.log")
     resources:
-        mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
+        mem_mb=lambda wildcards, threads: jasmine_config.get(utils.MEM_MB_CORE, 20000) + jasmine_config.get(utils.MEM_MB_PER_THREAD, 1000) * threads
     params:
         java_src=":".join(x for x in [jasmine_config.get(utils.SRC_PATH, ""), iris_config.get(utils.SRC_PATH, "")] if len(x) > 0),
         java=java_config.get(utils.PATH, "java"),
