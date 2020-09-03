@@ -121,6 +121,7 @@ rule specific_new_sv_types:
 rule normalize_sv_types_nSVtypes:
     output: os.path.join(refined_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".refined.nSVtypes.norm.vcf")
     input: os.path.join(refined_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".refined.nSVtypes.vcf"),
+    log: os.path.join(refined_svs_output_dir, utils.LOG, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".refined.nSVtypes.norm.vcf.log")
     resources:
         mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
     params:
@@ -132,6 +133,7 @@ rule normalize_sv_types_nSVtypes:
 rule normalize_sv_types_oSVtypes:
     output: os.path.join(refined_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".refined.norm.vcf")
     input: os.path.join(refined_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".refined.vcf"),
+    log: os.path.join(refined_svs_output_dir, utils.LOG, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".refined.norm.vcf.log")
     resources:
         mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
     params:
