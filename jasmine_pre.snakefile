@@ -127,8 +127,9 @@ rule normalize_sv_types_nSVtypes:
     params:
         java_src=":".join(x for x in [jasmine_config.get(utils.SRC_PATH, ""), iris_config.get(utils.SRC_PATH, "")] if len(x) > 0),
         java=java_config.get(utils.PATH, "java"),
+        tmp_file_path=lambda wc: os.path.join("output", f"{wc.sample}_{wc.tech}_sniffles.{sniffles_sens_suffix}.refined.nSVtypes_normalizeTypes.vcf"),
     shell:
-        "{params.java} -cp {params.java_src} Main --preprocess_only --pre_normalize --comma_filelist file_list={input} out_file={output} &> {log}"
+        "{params.java} -cp {params.java_src} Main --preprocess_only --pre_normalize --comma_filelist file_list={input} &> {log} && mv {params.tmp_file_path} {output}"
 
 rule normalize_sv_types_oSVtypes:
     output: os.path.join(refined_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".refined.norm.vcf")
@@ -139,8 +140,9 @@ rule normalize_sv_types_oSVtypes:
     params:
         java_src=":".join(x for x in [jasmine_config.get(utils.SRC_PATH, ""), iris_config.get(utils.SRC_PATH, "")] if len(x) > 0),
         java=java_config.get(utils.PATH, "java"),
+        tmp_file_path=lambda wc: os.path.join("output", f"{wc.sample}_{wc.tech}_sniffles.{sniffles_sens_suffix}.refined_normalizeTypes.vcf"),
     shell:
-        "{params.java} -cp {params.java_src} Main --preprocess_only --pre_normalize --comma_filelist file_list={input} out_file={output} &> {log}"
+        "{params.java} -cp {params.java_src} Main --preprocess_only --pre_normalize --comma_filelist file_list={input} &> {log} && mv {params.tmp_file_path} {output}"
 
 
 rule spec_marked_sensitive_new_sv_type_final_location:
