@@ -31,7 +31,7 @@ rule index_bam:
 
 rule sort_cut_bam:
     output: os.path.join(out_dir, "{base}.{suffix," + suffix+ "}.sort.bam")
-    input: os.path.join(out_dir, "{base}.{suffix}.sort.bam")
+    input: os.path.join(out_dir, "{base}.{suffix}.bam")
     shell:
         "samtools sort -@ 4 -O bam -o {output} {input}"
 
