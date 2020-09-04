@@ -21,6 +21,11 @@ WINDOW_SIZE = "window_size"
 PER_BASE = "per_base"
 FAST_MODE = "fast_mode"
 
+WINNOWMAP = "winnowmap"
+MERYL = "meryl"
+DISTINCT = "distinct"
+K = "k"
+
 AWK = "awk"
 SEQTK = "seqtk"
 NGMLR = "ngmlr"
@@ -134,8 +139,8 @@ def get_samples_to_reads_paths(config):
 
 
 def ensure_aligner(config):
-    if config['aligner'] not in {"ngmlr", "minimap2"}:
-        raise ValueError(f'unsupported aligner option {config["aligner"]}, only ngmlr and minimap2 are supported')
+    if config['aligner'] not in {"ngmlr", "minimap2", "winnowmap"}:
+        raise ValueError(f'unsupported aligner option {config["aligner"]}, only ngmlr, minimap2, and winnowmap are supported')
 
 
 def get_extra_alignments_paths(config):

@@ -88,3 +88,10 @@ tools:
     paer_base: False
     fast_mode: True
     window_size: 500
+  meryl:
+    path: "meryl"
+    distinct: 0.9998
+    k: 15
+  winnowmap:
+    path: "winnowmap"
+

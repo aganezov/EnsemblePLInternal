@@ -24,6 +24,8 @@ sed_config = config.get(utils.TOOLS, {}).get("sed", {})
 awk_config = config.get(utils.TOOLS, {}).get(utils.AWK, {})
 minimap2_config=config.get(utils.TOOLS, {}).get(utils.MINIMAP2, {})
 seqtk_config = config.get(utils.TOOLS, {}).get(utils.SEQTK, {})
+winnowmap_config=cofig.get(utils.TOOLS, {}).get(utils.WINNOWMAP, {})
+meryl_config=cofig.get(utils.TOOLS, {}).get(utils.MERYL, {})
 
 samples_regex = utils.get_samples_regex(samples_to_reads_paths)
 read_paths_regex = utils.get_reads_paths_regex(samples_to_reads_paths)
@@ -40,6 +42,7 @@ def split_fastx_dirs(wildcards):
 
 rule merged_coverage_mosdepth:
     input: bam=os.path.join(alignment_output_dir, "{sample}_{tech}.sort.bam"),
+           index=os.path.join(alignment_output_dir, "{sample}_{tech}.sort.bam.bai"),
     output: os.path.join(alignment_output_dir, utils.STATS, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.mosdepth.global.dist.txt")
     message: "Computing mosdepth coverage stats on {input}"
     threads: lambda wildcards: min(cluster_config.get("merged_coverage_mosdepth", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), mosdepth_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
@@ -139,25 +142,74 @@ rule clear_corrupt_sam_alignments:
     shell:
         "{params.command} {input} > {output} 2> {log}"
 
+
+def get_aligner(config):
+    aligner = config.get(utils.ALIGNER, "ngmlr")
+    if aligner == "ngmlr":
+        return ngmlr_config.get(utils.PATH, "ngmlr")
+    if aligner == "minimap2":
+        return minimap2_config.get(utils.PATH, "minimap2")
+    if aligner == "winnowmap":
+        return winnowmap_config.get(utils.PATH, "winnowmap")
+
+def get_aligner_preset(config, tech):
+    aligner = config.get(utils.ALIGNER, "ngmlr").lower()
+    if "ont" in tech.lower():
+        return "map-ont"
+    else:
+        if aligner == "ngmlr":
+            return "map-pacbio"
+        else:
+            return "map-pb"
+
+
 rule single_alignment:
     output:temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}" + "_{chunk_id,[a-z]+}.sam"))
-    input: os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}_{chunk_id}.{seq_format}")
+    input: reads=os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}_{chunk_id}.{seq_format}"),
+           meryld_db=lambda wc: f"{config[utils.REFERENCE]}_k{meryl_config.get(utils.K, 15)}.txt" if config.get(utils.ALIGNER, "ngmlr").lower() == "winnowmap" else "",
     threads: lambda wildcards: min(cluster_config.get("single_alignment", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), ngmlr_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
     message: "Aligning reads from {input} to {output}. Requested mem {resources.mem_mb}M on {threads} threads. Cluster config "
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}_{seq_format}", "{sample}_{tech}_{seq_format}_{chunk_id}.sam.log")
     resources:
         mem_mb=lambda wildcards, threads: ngmlr_config.get(utils.MEM_MB_CORE, 5000) + ngmlr_config.get(utils.MEM_MB_PER_THREAD, 500) * threads,
     params:
-        aligner=lambda wc: ngmlr_config.get(utils.PATH, "ngmlr") if config.get(utils.ALIGNER, "ngmlr") == "ngmlr" else minimap2_config.get(utils.PATH, "minimap2"),
+        aligner=lambda wc: get_aligner(config),
         input_flag=lambda wc: "-q" if config.get(utils.ALIGNER, "ngmlr") == "ngmlr" else "",
-        preset_value=lambda wc: ("" if config.get(utils.ALIGNER, "ngmlr") == "ngmlr" else "map-") + ("ont" if wc.tech.lower() == "ont" else ("pacbio" if config.get(utils.ALIGNER, "ngmlr") == "ngmlr" else "pb")),
+        preset_value=lambda wc: get_aligner_preset(config, wc.tech),
         reference=config[utils.REFERENCE],
         sam_output_flag=lambda wc: "" if config.get(utils.ALIGNER, "ngmlr") == "ngmlr" else "-a",
         reference_flag=lambda wc: "-r" if config.get(utils.ALIGNER, "ngmlr") == "ngmlr" else "",
         bam_fix_flag=lambda wc: "--bam-fix" if config.get(utils.ALIGNER, "ngmlr") == "ngmlr" else "",
-        md_flag=lambda wc: "" if config.get(utils.ALIGNER, "ngmlr") == "ngmlr" else "--MD"
+        md_flag=lambda wc: "" if config.get(utils.ALIGNER, "ngmlr") == "ngmlr" else "--MD",
+        w_flag=lambda wc: f"-W {config[utils.REFERENCE]}_k{meryl_config.get(utils.K, 15)}" if config.get(utils.ALIGNER, "ngmlr").lower() == "winnowmap" else ""
     shell:
-        "{params.aligner} {params.reference_flag} {params.reference} {params.input_flag} {input} -t {threads} -o {output} -x {params.preset_value} {params.sam_output_flag} {params.bam_fix_flag} {params.md_flag} &> {log}"
+        "{params.aligner} {params.w_flag} {params.reference_flag} {params.reference} {params.input_flag} {input} -t {threads} -o {output} -x {params.preset_value} {params.sam_output_flag} {params.bam_fix_flag} {params.md_flag} &> {log}"
+
+rule meryl_db_repetitive_extract:
+    output: config[utils.REFERENCE] + "_k{k,\d}.txt"
+    input: config[utils.REFERENCE] + "_k{k}DB"
+    log: config[utils.REFERENCE] + "_k{k}.log"
+    resources:
+        mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
+    params:
+        meryl=meryl_config.get(utils.PATH, "meryl"),
+        distinct=meryl_config.get(utils.DISTINCT, 0.9998),
+    shell:
+        "{params.meryl} print greater-than distinct={params.distinct} {input} > {output} 2> {log}"
+
+
+rule meryl_db_creation:
+    output: directory(config[utils.REFERENCE] + "_k{k,\d}DB")
+    input: config[utils.REFERENCE]
+    log: config[utils.REFERENCE] + "_k{k,\d}DB.log"
+    resources:
+        mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
+    params:
+        meryl=meryl_config.get(utils.PATH, "meryl"),
+        k=lambda wc: wc.k,
+    shell:
+        "{params.meryl} count k={params.k} output {output} {input} &> {log}"
+
 
 rule ensure_reads_input_extension:
     input: os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}", "{sample}_{tech}_{seq_format}_{chunk_id}")
