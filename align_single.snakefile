@@ -166,7 +166,7 @@ def get_aligner_preset(config, tech):
 rule single_alignment:
     output:temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}" + "_{chunk_id,[a-z]+}.sam"))
     input: reads=os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}_{chunk_id}.{seq_format}"),
-           meryld_db=lambda wc: f"{config[utils.REFERENCE]}_k{meryl_config.get(utils.K, 15)}.txt" if config.get(utils.ALIGNER, "ngmlr").lower() == "winnowmap" else "",
+           meryld_db=lambda wc: f"{config[utils.REFERENCE]}_k{meryl_config.get(utils.K, 15)}.txt" if config.get(utils.ALIGNER, "ngmlr").lower() == "winnowmap" else os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}_{chunk_id}.{seq_format}"),
     threads: lambda wildcards: min(cluster_config.get("single_alignment", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), ngmlr_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
     message: "Aligning reads from {input} to {output}. Requested mem {resources.mem_mb}M on {threads} threads. Cluster config "
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}_{seq_format}", "{sample}_{tech}_{seq_format}_{chunk_id}.sam.log")
@@ -186,7 +186,7 @@ rule single_alignment:
         "{params.aligner} {params.w_flag} {params.reference_flag} {params.reference} {params.input_flag} {input} -t {threads} -o {output} -x {params.preset_value} {params.sam_output_flag} {params.bam_fix_flag} {params.md_flag} &> {log}"
 
 rule meryl_db_repetitive_extract:
-    output: config[utils.REFERENCE] + "_k{k,\d}.txt"
+    output: config[utils.REFERENCE] + "_k{k,\d+}.txt"
     input: config[utils.REFERENCE] + "_k{k}DB"
     log: config[utils.REFERENCE] + "_k{k}.log"
     resources:
@@ -199,9 +199,9 @@ rule meryl_db_repetitive_extract:
 
 
 rule meryl_db_creation:
-    output: directory(config[utils.REFERENCE] + "_k{k,\d}DB")
+    output: directory(config[utils.REFERENCE] + "_k{k,\d+}DB")
     input: config[utils.REFERENCE]
-    log: config[utils.REFERENCE] + "_k{k,\d}DB.log"
+    log: config[utils.REFERENCE] + "_k{k}DB.log"
     resources:
         mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
     params:
