@@ -56,7 +56,7 @@ rule merged_coverage_mosdepth:
         window_size=mosdepth_config.get(utils.WINDOW_SIZE, 500),
         prefix=lambda wc: os.path.join(alignment_output_dir, utils.STATS, f"{wc.sample}_{wc.tech}"),
     shell:
-        "{params.mosdepth} {params.per_base} {params.fast_mode} --by {params.window_size} -t {threads} {params.prefix} {input}"
+        "{params.mosdepth} {params.per_base} {params.fast_mode} --by {params.window_size} -t {threads} {params.prefix} {input.bam}"
 
 
 rule merged_average_coverage_samtools:
