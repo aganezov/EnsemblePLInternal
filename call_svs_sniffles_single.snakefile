@@ -78,6 +78,19 @@ rule raw_vcf_files_list:
         with open(output[0], "wt") as dest:
             print(input[0], file=dest)
 
+def get_sniffles_parameter(parameter, sample=None, tech=None, default=None):
+    if sample is None or tech is None:
+        return default
+    result = None
+    for sample_data in config["samples"]:
+        if sample_data["sample"] == sample and sample_data["tech"] == tech:
+            result = sample_data.get(utils.SNIFFLES, {}).get(parameter, result)
+            break
+    result = sniffles_config.get(tech, {}).get(parameter, result)
+    result = sniffles_config.get(parameter, result)
+    return result if result is not None else default
+
+
 rule sensitive_svs_sniffles:
     input: os.path.join(alignment_output_dir, "{sample}_{tech}.sort.bam")
     output: os.path.join(raw_svs_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles." + sniffles_sens_suffix + ".vcf")
@@ -87,12 +100,11 @@ rule sensitive_svs_sniffles:
         mem_mb = lambda wildcards, threads: sniffles_config.get(utils.MEM_MB_CORE, 10000) + sniffles_config.get(utils.MEM_MB_PER_THREAD, 1000) * threads
     params:
         sniffles = sniffles_config.get(utils.PATH, "sniffles"),
-        min_length = sniffles_config.get(utils.MIN_LENGTH, 20),
-        min_support = sniffles_config.get(utils.MIN_SUPPORT, 2),
-        max_num_splits = sniffles_config.get(utils.MAX_NUM_SPLIT_READS, 10),
-        max_distance = sniffles_config.get(utils.MAX_DISTANCE, 50),
-        num_reads_report = sniffles_config.get(utils.NUM_READS_REPORT, -1),
-        min_seq_size = sniffles_config.get(utils.MIN_SEQ_SIZE, 1000)
+        min_support = lambda wc: get_sniffles_parameter(utils.MIN_SUPPORT, sample=wc.sample, tech=wc.tech, default=2),
+        max_num_splits = lambda wc: get_sniffles_parameter(utils.MAX_NUM_SPLIT_READS, sample=wc.sample, tech=wc.tech, default=10),
+        max_distance = lambda wc: get_sniffles_parameter(utils.MAX_DISTANCE, sample=wc.sample, tech=wc.tech, default=50),
+        num_reads_report = lambda wc: get_sniffles_parameter(utils.NUM_READS_REPORT, sample=wc.sample, tech=wc.tech, default=-1),
+        min_seq_size = lambda wc: get_sniffles_parameter(utils.MIN_SEQ_SIZE, sample=wc.sample, tech=wc.tech, default=1000),
     shell:
         "{params.sniffles} -m {input} -v {output} --threads {threads} --min_support {params.min_support} --max_distance {params.max_distance} --max_num_splits {params.max_num_splits} --min_length {params.min_length} --num_reads_report {params.num_reads_report} --min_seq_size {params.min_seq_size} &> {log}"
 
