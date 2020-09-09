@@ -100,6 +100,7 @@ rule sensitive_svs_sniffles:
         mem_mb = lambda wildcards, threads: sniffles_config.get(utils.MEM_MB_CORE, 10000) + sniffles_config.get(utils.MEM_MB_PER_THREAD, 1000) * threads
     params:
         sniffles = sniffles_config.get(utils.PATH, "sniffles"),
+        min_length = lambda wc: get_sniffles_parameter(utils.MIN_LENGTH, sample=wc.sample, tech=wc.tech, default=20),
         min_support = lambda wc: get_sniffles_parameter(utils.MIN_SUPPORT, sample=wc.sample, tech=wc.tech, default=2),
         max_num_splits = lambda wc: get_sniffles_parameter(utils.MAX_NUM_SPLIT_READS, sample=wc.sample, tech=wc.tech, default=10),
         max_distance = lambda wc: get_sniffles_parameter(utils.MAX_DISTANCE, sample=wc.sample, tech=wc.tech, default=50),
