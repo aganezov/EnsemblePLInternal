@@ -81,14 +81,14 @@ rule raw_vcf_files_list:
 def get_sniffles_parameter(parameter, sample=None, tech=None, default=None):
     if sample is None or tech is None:
         return default
-    result = None
+    result = default
+    result = sniffles_config.get(parameter, result)
+    result = sniffles_config.get(tech, {}).get(parameter, result)
     for sample_data in config["samples"]:
         if sample_data["sample"] == sample and sample_data["tech"] == tech:
             result = sample_data.get(utils.SNIFFLES, {}).get(parameter, result)
             break
-    result = sniffles_config.get(tech, {}).get(parameter, result)
-    result = sniffles_config.get(parameter, result)
-    return result if result is not None else default
+    return result
 
 
 rule sensitive_svs_sniffles:
