@@ -143,17 +143,39 @@ rule clear_corrupt_sam_alignments:
         "{params.command} {input} > {output} 2> {log}"
 
 
-def get_aligner(config):
-    aligner = config.get(utils.ALIGNER, "ngmlr")
-    if aligner == "ngmlr":
-        return ngmlr_config.get(utils.PATH, "ngmlr")
-    if aligner == "minimap2":
-        return minimap2_config.get(utils.PATH, "minimap2")
-    if aligner == "winnowmap":
-        return winnowmap_config.get(utils.PATH, "winnowmap")
+def get_aligner(sample=None, tech=None, default="ngmlr"):
+    if sample is None or tech is None:
+        return default
+    result = default
+    for sample_data in config["samples"]:
+        if sample_data["sample"] == sample and sample_data["tech"] == tech:
+            result = sample_data.get(utils.ALIGNER, result)
+            break
+    return config.get(utils.ALIGNER, result).lower()
 
-def get_aligner_preset(config, tech):
-    aligner = config.get(utils.ALIGNER, "ngmlr").lower()
+
+
+aligners_configs = {
+    "ngmlr": ngmlr_config,
+    "minimap2": minimap2_config,
+    "winnowmap": winnowmap_config,
+}
+
+def get_aligner_path(aligner, sample=None, tech=None, default=None):
+    if default is None:
+        default = aligner
+    if sample is None or tech is None:
+        return default
+    result = default
+    result = aligners_configs[aligner].get(utils.PATH, result)
+    result = aligners_configs[aligner].get(tech, {}).get(utils.PATH, result)
+    for sample_data in config["samples"]:
+        if sample_data["sample"] == sample and sample_data["tech"] == tech:
+            result = sample_data.get(aligner, {}).get(utils.PATH, result)
+            break
+    return result
+
+def get_aligner_preset(aligner, tech):
     if "ont" in tech.lower():
         return "map-ont"
     else:
@@ -173,15 +195,15 @@ rule single_alignment:
     resources:
         mem_mb=lambda wildcards, threads: ngmlr_config.get(utils.MEM_MB_CORE, 5000) + ngmlr_config.get(utils.MEM_MB_PER_THREAD, 500) * threads,
     params:
-        aligner=lambda wc: get_aligner(config),
-        input_flag=lambda wc: "-q" if config.get(utils.ALIGNER, "ngmlr") == "ngmlr" else "",
-        preset_value=lambda wc: get_aligner_preset(config, wc.tech),
+        aligner=lambda wc: get_aligner_path(aligner=get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr")),
+        input_flag=lambda wc: "-q" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "ngmlr" else "",
+        preset_value=lambda wc: get_aligner_preset(aligner=get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr"), tech=wc.tech),
         reference=config[utils.REFERENCE],
-        sam_output_flag=lambda wc: "" if config.get(utils.ALIGNER, "ngmlr") == "ngmlr" else "-a",
-        reference_flag=lambda wc: "-r" if config.get(utils.ALIGNER, "ngmlr") == "ngmlr" else "",
-        bam_fix_flag=lambda wc: "--bam-fix" if config.get(utils.ALIGNER, "ngmlr") == "ngmlr" else "",
-        md_flag=lambda wc: "" if config.get(utils.ALIGNER, "ngmlr") == "ngmlr" else "--MD",
-        w_flag=lambda wc: f"-W {config[utils.REFERENCE]}_k{meryl_config.get(utils.K, 15)}" if config.get(utils.ALIGNER, "ngmlr").lower() == "winnowmap" else ""
+        sam_output_flag=lambda wc: "" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "ngmlr" else "-a",
+        reference_flag=lambda wc: "-r" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "ngmlr" else "",
+        bam_fix_flag=lambda wc: "--bam-fix" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "ngmlr" else "",
+        md_flag=lambda wc: "" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "ngmlr" else "--MD",
+        w_flag=lambda wc: f"-W {config[utils.REFERENCE]}_k{meryl_config.get(utils.K, 15)}" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "winnowmap" else ""
     shell:
         "{params.aligner} {params.w_flag} {params.reference_flag} {params.reference} {params.input_flag} {input} -t {threads} -o {output} -x {params.preset_value} {params.sam_output_flag} {params.bam_fix_flag} {params.md_flag} &> {log}"
 
