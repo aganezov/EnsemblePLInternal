@@ -99,6 +99,7 @@ STATS = "stats"
 ENABLE_SV_INFERENCE = "enable_sv_inference"
 ENABLE_SV_REFINEMENT = "enable_sv_refinement"
 ENABLE_IS_MERGING = "enable_is_merging"
+ENABLE_ALIGNMENT_STATS = "enable_alignment_stats"
 
 
 EXISTING_ALIGNMENTS = "existing_alignments"
