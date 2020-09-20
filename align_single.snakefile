@@ -195,7 +195,7 @@ rule single_alignment:
     resources:
         mem_mb=lambda wildcards, threads: ngmlr_config.get(utils.MEM_MB_CORE, 5000) + ngmlr_config.get(utils.MEM_MB_PER_THREAD, 500) * threads,
     params:
-        aligner=lambda wc: get_aligner_path(aligner=get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr")),
+        aligner=lambda wc: get_aligner_path(aligner=get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr"), sample=wc.sample, tech=wc.tech),
         input_flag=lambda wc: "-q" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "ngmlr" else "",
         preset_value=lambda wc: get_aligner_preset(aligner=get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr"), tech=wc.tech),
         reference=config[utils.REFERENCE],
