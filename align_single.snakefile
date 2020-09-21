@@ -181,8 +181,12 @@ def get_aligner_preset(aligner, tech):
     else:
         if aligner == "ngmlr":
             return "map-pacbio"
-        else:
+        elif aligner == "minimap2":
             return "map-pb"
+        else:
+            if "ccs" in tech.lower():
+                return
+
 
 
 rule single_alignment:
@@ -203,9 +207,11 @@ rule single_alignment:
         reference_flag=lambda wc: "-r" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "ngmlr" else "",
         bam_fix_flag=lambda wc: "--bam-fix" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "ngmlr" else "",
         md_flag=lambda wc: "" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "ngmlr" else "--MD",
-        w_flag=lambda wc: f"-W {config[utils.REFERENCE]}_k{meryl_config.get(utils.K, 15)}" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "winnowmap" else ""
+        w_db_flag=lambda wc: f"-W {config[utils.REFERENCE]}_k{meryl_config.get(utils.K, 15)}" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "winnowmap" else "",
+        w_flag=lambda wc: f"-w {winnowmap_config.get('w', 50)}" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "winnowmap" else "",
+        k_flag=lambda wc: f"-k {meryl_config.get(utils.K, 15)}" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "winnowmap" else "",
     shell:
-        "{params.aligner} {params.w_flag} {params.reference_flag} {params.reference} {params.input_flag} {input} -t {threads} -o {output} -x {params.preset_value} {params.sam_output_flag} {params.bam_fix_flag} {params.md_flag} &> {log}"
+         "{params.aligner} {params.w_db_flag} {params.w_flag} {params.k_flag} {params.reference_flag} {params.reference} {params.input_flag} {input.reads} -t {threads} -o {output} -x {params.preset_value} {params.sam_output_flag} {params.bam_fix_flag} {params.md_flag} &> {log}"
 
 rule meryl_db_repetitive_extract:
     output: config[utils.REFERENCE] + "_k{k,\d+}.txt"
