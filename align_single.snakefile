@@ -185,7 +185,9 @@ def get_aligner_preset(aligner, tech):
             return "map-pb"
         else:
             if "ccs" in tech.lower():
-                return
+                return "map-pb-clr"
+            else:
+                return "map-pb"
 
 
 
