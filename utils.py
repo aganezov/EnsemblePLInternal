@@ -301,7 +301,7 @@ def get_sv_length(vcf_record, abs_value: bool = True, sv_type: Optional[SVType] 
     elif sv_type == SVType.INS:
         result = int(float(vcf_record.INFO.get(info_len_field, get_sv_length_from_ref_alt(vcf_record))))
     elif sv_type == SVType.DEL:
-        result = int(float(vcf_record.INFO.get(info_len_field, get_sv_length_from_coordinates)))
+        result = int(float(vcf_record.INFO.get(info_len_field, get_sv_length_from_coordinates(vcf_record))))
         if result > 0:
             result *= -1
     if abs_value:
