@@ -34,13 +34,14 @@ rule sv_tally:
     resources:
         mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
     params:
+        python=config.get(utils.TOOLS, {}).get(utils.PYTHON, {}).get(utils.PATH),
         script_path=sv_sizes_config.get(utils.PATH, "sv_sizes.py"),
         bins=sv_sizes_config.get(utils.BINS, "1,30,50,100,150,200,350,300,500,750,1000,2000,5000,10000,50000,100000,500000"),
         types=sv_sizes_config.get(utils.TYPES, "INS,DEL,DUP,INV,TRA"),
         abs_length="" if sv_sizes_config.get(utils.ABS_LENGTH, True) else "--no-abs-length",
         info_len_field=sv_sizes_config.get(utils.INFO_LENGTH_FIELD, "SVLEN")
     shell:
-         "python {params.script_path} {input} -o {output} --bins {params.bins} --types {params.types} {params.abs_length} --info-len-field {params.info_len_field} &> {log}"
+         "{params.python} {params.script_path} {input} -o {output} --bins {params.bins} --types {params.types} {params.abs_length} --info-len-field {params.info_len_field} &> {log}"
 
 
 rule intra_sample_merged_specific:

@@ -20,6 +20,7 @@ MOSDEPTH = "mosdepth"
 WINDOW_SIZE = "window_size"
 PER_BASE = "per_base"
 FAST_MODE = "fast_mode"
+PYTHON = "python"
 
 WINNOWMAP = "winnowmap"
 MERYL = "meryl"
