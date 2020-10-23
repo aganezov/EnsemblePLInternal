@@ -182,7 +182,10 @@ def get_aligner_preset(aligner, tech):
         if aligner == "ngmlr":
             return "map-pacbio"
         elif aligner == "minimap2":
-            return "map-pb"
+            if "ccs" in tech.lower():
+                return "asm20"
+            else:
+                return "map-pb"
         else:
             if "ccs" in tech.lower():
                 return "map-pb"
