@@ -85,6 +85,21 @@ rule alignment_yield:
     shell:
         "{params.samtools} bam2fq {input} | awk \'NR%4==2 {{l+=length($0)}} END {{print \"Total read length \",l}}\' > {output} 2> {log}"
 
+rule samtools_stats:
+    output: os.path.join(alignment_output_dir, utils.STATS, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.samtools.stats.txt")
+    input: bam=os.path.join(alignment_output_dir, "{sample}_{tech}.sort.bam"),
+           ref=config[utils.REFERENCE],
+    message: "Computing samtools stats from the produced bam file"
+    log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}.samtools.stats.log")
+    threads: lambda wildcards: min(cluster_config.get("single_sam_to_sort_bam", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), samtools_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
+    resources:
+        mem_mb=lambda wildcards, threads: samtools_config.get(utils.MEM_MB_CORE, 2000) + samtools_config.get(utils.MEM_MB_PER_THREAD, 1000) * threads
+    params:
+        samtools=samtools_config.get(utils.PATH, "samtools"),
+    shell:
+        "{params.samtools} stats -r {input.ref} {input.bam} > {output} 2> {log}"
+
+
 def read_extensions_per_sample(sample, tech):
     result = set()
     for read_path in samples_to_reads_paths[(sample, tech.upper())]:

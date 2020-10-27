@@ -30,6 +30,7 @@ for (sample, tech) in sample_to_reads_paths.keys():
             suffix = ""
         if config.get(utils.ENABLE_ALIGNMENT_STATS, True):
             overall_expected_files.append(os.path.join(alignment_output_dir, utils.STATS, f"{sample}_{tech}.coverage.txt"))
+            overall_expected_files.append(os.path.join(alignment_output_dir, utils.STATS, f"{sample}_{tech}.samtools.stats.txt"))
             overall_expected_files.append(os.path.join(alignment_output_dir, utils.STATS, f"{sample}_{tech}.alignment.yield.txt"))
             overall_expected_files.append(os.path.join(alignment_output_dir, utils.STATS, f"{sample}_{tech}.mosdepth.global.dist.txt"))
         if config.get(utils.ENABLE_SV_INFERENCE, True):
