@@ -1,4 +1,5 @@
 import os
+import sys
 from collections import defaultdict
 from enum import Enum
 import logging
@@ -131,10 +132,22 @@ def get_samples_to_reads_paths(config):
             if READS_PATHS not in sample_data or not isinstance(sample_data[READS_PATHS], list) or len(sample_data[READS_PATHS]) < 1:
                 raise ValueError(
                     f"Error when parsing reads paths for sample {sample_name} sample. Make sure the entries are formatted as a list of strings under the {READS_PATHS} key")
+            if (sample_name, tech) in samples_to_reads_paths:
+                warning_message = f"sample {sample_name} with read tech {tech} is specified in input data multiple times."
+                if not config.get("allow_dup_st_entries", False):
+                    raise ValueError(f"Error! {warning_message}")
+                else:
+                    print(f"WARNING! {warning_message} Proceeding because `allow_dup_st_entries` is set to True", file=sys.stderr)
             for read_path in sample_data[READS_PATHS]:
                 if not read_path.endswith(("fastq", "fq", "fastq.gz", "fq.gz", "fasta", "fasta.gz", "fa", "fa.gz")):
                     raise ValueError(f"Unsupported input format for read path {read_path}. Only 'fastq', 'fq', 'fastq.gz', 'fq.gz', 'fasta', 'fasta.gz', 'fa', and 'fa.gz' are supported")
                 samples_to_reads_paths[(sample_name, tech)].append(read_path)
+            if len(samples_to_reads_paths[(sample_name, tech)]) != len(set(samples_to_reads_paths[(sample_name, tech)])):
+                warning_message = f"sample {sample_name} with read tech {tech} has some read file paths specified multiple times."
+                if not config.get("allow_dup_reads_entries", False):
+                    raise ValueError(f"Error! {warning_message}")
+                else:
+                    print(f"WARNING! {warning_message} Proceeding because `allow_dup_reads_entries` is set to True", file=sys.stderr)
         else:
             samples_to_reads_paths[(sample_name, tech)].append("")
     return samples_to_reads_paths
