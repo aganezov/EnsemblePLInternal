@@ -1,9 +1,12 @@
-configfile: "data.yaml"
-configfile: "tools.yaml"
-
 import os
 import utils
 from collections import defaultdict
+
+if os.path.exists("data.yaml"):
+    configfile: "data.yaml"
+if os.path.exists("tools.yaml"):
+    configfile: "tools.yaml"
+
 
 output_dir = config.get(utils.OUTPUT_DIR, "")
 alignment_output_dir = os.path.join(output_dir, utils.ALIGNMENTS)

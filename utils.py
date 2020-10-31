@@ -115,7 +115,7 @@ EXISTING_ALIGNMENTS = "existing_alignments"
 
 def ensure_samples_correctness(config):
     if SAMPLES not in config or not isinstance(config[SAMPLES], list) or len(config[SAMPLES]) < 1:
-        raise ValueError("Configuration data.yaml file is missing information about samples or the setup is not dictionary-like")
+        raise ValueError("Configuration data file is missing information about samples or the setup is not dictionary-like")
 
 
 def get_samples_to_reads_paths(config):
