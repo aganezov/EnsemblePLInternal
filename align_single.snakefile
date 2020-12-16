@@ -216,6 +216,7 @@ rule single_alignment:
     output:temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}" + "_{chunk_id,[a-z]+}.sam"))
     input: reads=os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}_{chunk_id}.{seq_format}"),
            meryld_db=lambda wc: f"{config[utils.REFERENCE]}_k{meryl_config.get(utils.K, 15)}.txt" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "winnowmap" else os.path.join(alignment_output_dir, f"{wc.sample}_{wc.tech}_{wc.seq_format}_{wc.chunk_id}.{wc.seq_format}"),
+           reference=config[utils.REFERENCE],
     threads: lambda wildcards: min(cluster_config.get("single_alignment", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), ngmlr_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
     message: "Aligning reads from {input} to {output}. Requested mem {resources.mem_mb}M on {threads} threads. Cluster config "
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}_{seq_format}", "{sample}_{tech}_{seq_format}_{chunk_id}.sam.log")
@@ -225,7 +226,6 @@ rule single_alignment:
         aligner=lambda wc: get_aligner_path(aligner=get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr"), sample=wc.sample, tech=wc.tech),
         input_flag=lambda wc: "-q" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "ngmlr" else "",
         preset_value=lambda wc: get_aligner_preset(aligner=get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr"), tech=wc.tech),
-        reference=config[utils.REFERENCE],
         sam_output_flag=lambda wc: "" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "ngmlr" else "-a",
         reference_flag=lambda wc: "-r" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "ngmlr" else "",
         bam_fix_flag=lambda wc: "--bam-fix" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "ngmlr" else "",
@@ -234,7 +234,7 @@ rule single_alignment:
         w_flag=lambda wc: f"-w {winnowmap_config.get('w', 50)}" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "winnowmap" else "",
         k_flag=lambda wc: f"-k {meryl_config.get(utils.K, 15)}" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "winnowmap" else "",
     shell:
-         "{params.aligner} {params.w_db_flag} {params.w_flag} {params.k_flag} {params.reference_flag} {params.reference} {params.input_flag} {input.reads} -t {threads} -o {output} -x {params.preset_value} {params.sam_output_flag} {params.bam_fix_flag} {params.md_flag} &> {log}"
+         "{params.aligner} {params.w_db_flag} {params.w_flag} {params.k_flag} {params.reference_flag} {input.reference} {params.input_flag} {input.reads} -t {threads} -o {output} -x {params.preset_value} {params.sam_output_flag} {params.bam_fix_flag} {params.md_flag} &> {log}"
 
 rule meryl_db_repetitive_extract:
     output: config[utils.REFERENCE] + "_k{k,\d+}.txt"
