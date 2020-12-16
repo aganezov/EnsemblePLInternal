@@ -276,6 +276,10 @@ def get_fastx_files(sample, tech, extension):
     return result
 
 
+def get_reads_batch_cnt(aligner, default=200000):
+    a_config = aligners_configs[aligner]
+    return a_config.get(utils.READS_CNT_PER_RUN, default)
+
 checkpoint split_fastq:
     output:
         directory(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fastq"))
@@ -288,7 +292,7 @@ checkpoint split_fastq:
         cut_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fastq", "fq"))) == 0 else f"<(cat {' '.join(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=('fastq', 'fq')))})",
         zcat_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fastq.gz", "fq.gz"))) == 0 else f"<(zcat {' '.join(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=('fastq.gz', 'fq.gz')))})",
         prefix=lambda wc: os.path.join(alignment_output_dir, f"{wc.sample}_{wc.tech}_fastq", f"{wc.sample}_{wc.tech}_fastq_"),
-        fastq_cnt=lambda wc: ngmlr_config.get(utils.READS_CNT_PER_RUN, 200000) * 4,
+        fastq_cnt=lambda wc: get_reads_batch_cnt(aligner=get_aligner(sample=wc.sample, tech=wc.tech), default=200000) * 4,
     shell:
         "mkdir -p {output} && cat {params.cut_command} {params.zcat_command} | split -l {params.fastq_cnt} -a 3 - {params.prefix}"
 
@@ -304,7 +308,7 @@ checkpoint split_fasta:
         cut_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta", "fa"))) == 0 else "<(cat {fasta})".format(fasta=" ".join(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta", "fa")))),
         zcat_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta.gz", "fa.gz"))) == 0 else "<(zcat {fasta_gz})".format(fasta_gz=" ".join(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta.gz", "fa.gz")))),
         prefix=lambda wc: os.path.join(alignment_output_dir, f"{wc.sample}_{wc.tech}_fasta", f"{wc.sample}_{wc.tech}_fasta_"),
-        fasta_cnt=lambda wc: ngmlr_config.get(utils.READS_CNT_PER_RUN, 200000) * 2,
+        fasta_cnt=lambda wc: get_reads_batch_cnt(aligner=get_aligner(sample=wc.sample, tech=wc.tech), default=200000) * 2,
         seqtk_command=lambda wc: seqtk_config.get(utils.PATH, "seqtk"),
     shell:
         "mkdir -p {output} && cat {params.cut_command} {params.zcat_command} | seqtk seq - | split -l {params.fasta_cnt} -a 3 - {params.prefix}"
