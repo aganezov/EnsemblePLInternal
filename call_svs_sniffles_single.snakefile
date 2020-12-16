@@ -100,7 +100,7 @@ rule sensitive_svs_sniffles:
     threads: lambda wildcards: min(cluster_config.get("sensitive_svs_sniffles", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), sniffles_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
     log: os.path.join(raw_svs_output_dir, utils.LOG, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".vcf.log")
     resources:
-        mem_mb = lambda wildcards, threads: sniffles_config.get(utils.MEM_MB_CORE, 10000) + sniffles_config.get(utils.MEM_MB_PER_THREAD, 1000) * threads
+        mem_mb = lambda wildcards, threads: sniffles_config.get(utils.MEM_MB_CORE, 25000) + sniffles_config.get(utils.MEM_MB_PER_THREAD, 1000) * threads
     params:
         sniffles = sniffles_config.get(utils.PATH, "sniffles"),
         min_length = lambda wc: get_sniffles_parameter(utils.MIN_LENGTH, sample=wc.sample, tech=wc.tech, default=20),
