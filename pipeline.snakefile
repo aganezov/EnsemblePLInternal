@@ -6,7 +6,7 @@ if os.path.exists("data.yaml"):
 if os.path.exists("tools.yaml"):
     configfile: "tools.yaml"
 
-output_dir = config.get(utils.OUTPUT_DIR, ".")
+output_dir = config.get(utils.OUTPUT_DIR, "")
 alignment_output_dir = os.path.join(output_dir, utils.ALIGNMENTS)
 svs_output_dir = os.path.join(output_dir, utils.SVS)
 raw_svs_output_dir = os.path.join(svs_output_dir, utils.RAW)
