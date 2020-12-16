@@ -217,11 +217,11 @@ rule single_alignment:
     input: reads=os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}_{chunk_id}.{seq_format}"),
            meryld_db=lambda wc: f"{config[utils.REFERENCE]}_k{meryl_config.get(utils.K, 15)}.txt" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "winnowmap" else os.path.join(alignment_output_dir, f"{wc.sample}_{wc.tech}_{wc.seq_format}_{wc.chunk_id}.{wc.seq_format}"),
            reference=config[utils.REFERENCE],
-    threads: lambda wildcards: min(cluster_config.get("single_alignment", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), ngmlr_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
+    threads: lambda wildcards: min(cluster_config.get("single_alignment", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), aligners_configs[get_aligner(sample=wildcards.sample, tech=wildcards.tech)].get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
     message: "Aligning reads from {input} to {output}. Requested mem {resources.mem_mb}M on {threads} threads. Cluster config "
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}_{seq_format}", "{sample}_{tech}_{seq_format}_{chunk_id}.sam.log")
     resources:
-        mem_mb=lambda wildcards, threads: ngmlr_config.get(utils.MEM_MB_CORE, 5000) + ngmlr_config.get(utils.MEM_MB_PER_THREAD, 500) * threads,
+        mem_mb=lambda wildcards, threads: aligners_configs[get_aligner(sample=wildcards.sample, tech=wildcards.tech)].get(utils.MEM_MB_CORE, 6000) + aligners_configs[get_aligner(sample=wildcards.sample, tech=wildcards.tech)].get(utils.MEM_MB_PER_THREAD, 1000) * threads,
     params:
         aligner=lambda wc: get_aligner_path(aligner=get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr"), sample=wc.sample, tech=wc.tech),
         input_flag=lambda wc: "-q" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "ngmlr" else "",
