@@ -67,7 +67,12 @@ tools:
     max_ins_dist: 100
     max_length_change: 0.25
   minimap2:
+    reads_cnt_per_run: 800000
+    mem_mb_per_thread: 1000
+    mem_mb_core: 6000
     path: "minimap2"
+    threads: 100
+    time: "72:0:0"
   racon:
     path: "racon"
   sv_sizes:
@@ -93,5 +98,9 @@ tools:
     distinct: 0.9998
     k: 15
   winnowmap:
+    reads_cnt_per_run: 800000
+    mem_mb_per_thread: 1000
+    mem_mb_core: 6000
     path: "winnowmap"
-
+    threads: 100
+    time: "72:0:0"
