@@ -282,7 +282,7 @@ def get_reads_batch_cnt(aligner, default=200000):
 
 checkpoint split_fastq:
     output:
-        directory(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fastq"))
+        temp(directory(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fastq")))
     input:
         fastq=lambda wc: get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fastq", "fq")),
         fastq_gz=lambda wc: get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fastq.gz", "fa.gz")),
@@ -298,7 +298,7 @@ checkpoint split_fastq:
 
 checkpoint split_fasta:
     output:
-        directory(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fasta"))
+        temp(directory(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_fasta")))
     input:
         fasta=lambda wc: get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta", "fa")),
         fasta_gz=lambda wc: get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta.gz", "fa.gz")),
@@ -317,6 +317,11 @@ rule samtools_tmp_dir:
     output: temp(directory(os.path.join(config["tools"].get(utils.TMP_DIR, ""), "samtools_tmp_{sample}_{tech}_{seq_format}_{chunk_id}")))
     shell: "mkdir -p {output}"
 
+
+def get_aggregate_dirs(sample, tech):
+    extensions = read_extensions_per_sample(sample=sample, tech=tech)
+    return [os.path.join(alignment_output_dir, f"{sample}_{tech}_{ex}") for ex in ["fasta", "fastq"] if ex in extensions]
+
 rule index_bam:
     input: os.path.join(alignment_output_dir, "{sample}_{tech}.sort.bam")
     output: os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.sort.bam.bai")
@@ -331,7 +336,8 @@ rule index_bam:
 rule merge_sorted:
     output: os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}.sort.bam")
     input: created_bams=aggregated_input_for_bam_merging,
-           existing_alignments=lambda wc: samples_to_extra_alignments_paths[(wc.sample, wc.tech)]
+           existing_alignments=lambda wc: samples_to_extra_alignments_paths[(wc.sample, wc.tech)],
+           agg_dirs=lambda wc: get_aggregate_dirs(sample=wc.sample, tech=wc.tech)
     message: "Combining sorted bam files. Requested mem {resources.mem_mb}M."
     log: os.path.join(alignment_output_dir, utils.LOG, "{sample}_{tech}.sort.bam.log")
     resources:
