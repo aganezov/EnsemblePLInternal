@@ -216,7 +216,7 @@ def get_aligner_preset(aligner, tech):
 rule single_alignment:
     output:temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}" + "_{chunk_id,[a-z]+}.bam"))
     input: reads=os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}", "{sample}_{tech}_{seq_format}_{chunk_id}.{seq_format}.gz"),
-           meryld_db=lambda wc: f"{config[utils.REFERENCE]}_k{meryl_config.get(utils.K, 15)}.txt" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "winnowmap" else os.path.join(alignment_output_dir, f"{wc.sample}_{wc.tech}_{wc.seq_format}_{wc.chunk_id}.{wc.seq_format}"),
+           meryld_db=lambda wc: f"{config[utils.REFERENCE]}_k{meryl_config.get(utils.K, 15)}.txt" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "winnowmap" else os.path.join(alignment_output_dir, f"{wc.sample}_{wc.tech}_{wc.seq_format}_{wc.chunk_id}.{wc.seq_format}.gz"),
            reference=config[utils.REFERENCE],
     threads: lambda wildcards: min(cluster_config.get("single_alignment", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), aligners_configs[get_aligner(sample=wildcards.sample, tech=wildcards.tech)].get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
     message: "Aligning reads from {input} to {output}. Requested mem {resources.mem_mb}M on {threads} threads. Cluster config "
@@ -265,10 +265,10 @@ rule meryl_db_creation:
         "{params.meryl} count k={params.k} output {output} {input} &> {log}"
 
 
-rule ensure_reads_input_extension:
-    input: os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}", "{sample}_{tech}_{seq_format}_{chunk_id}")
-    output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}_{chunk_id,[a-z]+}.{seq_format}"))
-    shell: "mv {input} {output} && touch {input}"
+# rule ensure_reads_input_extension:
+#     input: os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}", "{sample}_{tech}_{seq_format}_{chunk_id}")
+#     output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}_{chunk_id,[a-z]+}.{seq_format}"))
+#     shell: "mv {input} {output} && touch {input}"
 
 
 def get_fastx_files(sample, tech, extension):
