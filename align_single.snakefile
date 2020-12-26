@@ -121,20 +121,21 @@ def aggregated_input_for_bam_merging(wildcards):
         chekpoint_output = checkpoints.split_fasta.get(**wildcards).output[0]
         result.extend(expand(
             os.path.join(alignment_output_dir, f"{wildcards.sample}_{wildcards.tech}_fasta_" + "{chunk_id}.sort.bam"),
-            chunk_id=glob_wildcards(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fasta_" + "{chunk_id}")).chunk_id
+            chunk_id=glob_wildcards(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fasta_" + "{chunk_id}.fasta.gz")).chunk_id
         ))
     if "fastq" in extensions:
         chekpoint_output = checkpoints.split_fastq.get(**wildcards).output[0]
         result.extend(expand(
             os.path.join(alignment_output_dir, f"{wildcards.sample}_{wildcards.tech}_fastq_" + "{chunk_id}.sort.bam"),
-            chunk_id=glob_wildcards(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fastq_" + "{chunk_id}")).chunk_id
+            chunk_id=glob_wildcards(os.path.join(chekpoint_output, f"{wildcards.sample}_{wildcards.tech}_fastq_" + "{chunk_id}.fastq.gz")).chunk_id
         ))
     return result
 
-rule single_sam_to_sort_bam:
+rule single_bam_to_sort_bam:
     output:temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}_{chunk_id,[a-z]+}.sort.bam"))
     input:
-        sam=os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}_{chunk_id}.fixed.sam"),
+        bam=os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}_{chunk_id}.bam"),
+        reads=os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}", "{sample}_{tech}_{seq_format}_{chunk_id}.{seq_format}.gz"),
         tmp_dir=lambda wc: os.path.join(config["tools"].get(utils.TMP_DIR, ""), f"samtools_tmp_{wc.sample}_{wc.tech}_{wc.seq_format}_{wc.chunk_id}")
     threads:lambda wildcards: min(cluster_config.get("single_sam_to_sort_bam", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), samtools_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
     message: "Transforming an alignment sam file {input.sam} into a sorted bam file {output}. Requested mem {resources.mem_mb}M on {threads} threads. Cluster config "
@@ -146,7 +147,7 @@ rule single_sam_to_sort_bam:
         samtools=samtools_config.get(utils.PATH, "samtools"),
         mem_mb_per_thread=samtools_config.get(utils.MEM_MB_PER_THREAD, 1000),
     shell:
-        "{params.samtools} sort -O bam -o {output} -@ {threads} -m {params.mem_mb_per_thread}M -T {params.tmp_dir} {input.sam} &> {log}"
+        "{params.samtools} sort -O bam -o {output} -@ {threads} -m {params.mem_mb_per_thread}M -T {params.tmp_dir} {input.bam} &> {log}"
 
 rule clear_corrupt_sam_alignments:
     output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}" + "_{chunk_id,[a-z]+}.fixed.sam"))
@@ -213,8 +214,8 @@ def get_aligner_preset(aligner, tech):
 
 
 rule single_alignment:
-    output:temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}" + "_{chunk_id,[a-z]+}.sam"))
-    input: reads=os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}_{chunk_id}.{seq_format}"),
+    output:temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}" + "_{chunk_id,[a-z]+}.bam"))
+    input: reads=os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}", "{sample}_{tech}_{seq_format}_{chunk_id}.{seq_format}.gz"),
            meryld_db=lambda wc: f"{config[utils.REFERENCE]}_k{meryl_config.get(utils.K, 15)}.txt" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "winnowmap" else os.path.join(alignment_output_dir, f"{wc.sample}_{wc.tech}_{wc.seq_format}_{wc.chunk_id}.{wc.seq_format}"),
            reference=config[utils.REFERENCE],
     threads: lambda wildcards: min(cluster_config.get("single_alignment", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), aligners_configs[get_aligner(sample=wildcards.sample, tech=wildcards.tech)].get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
@@ -233,8 +234,10 @@ rule single_alignment:
         w_db_flag=lambda wc: f"-W {config[utils.REFERENCE]}_k{meryl_config.get(utils.K, 15)}" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "winnowmap" else "",
         w_flag=lambda wc: f"-w {winnowmap_config.get('w', 50)}" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "winnowmap" else "",
         k_flag=lambda wc: f"-k {meryl_config.get(utils.K, 15)}" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "winnowmap" else "",
+        samtools=samtools_config.get(utils.PATH,"samtools"),
     shell:
-         "{params.aligner} {params.w_db_flag} {params.w_flag} {params.k_flag} {params.reference_flag} {input.reference} {params.input_flag} {input.reads} -t {threads} -o {output} -x {params.preset_value} {params.sam_output_flag} {params.bam_fix_flag} {params.md_flag} &> {log}"
+         "{params.aligner} {params.w_db_flag} {params.w_flag} {params.k_flag} {params.reference_flag} {input.reference} {params.input_flag} {input.reads} -t {threads}"
+         " -x {params.preset_value} {params.sam_output_flag} {params.bam_fix_flag} {params.md_flag} 2> {log} | {params.samtools} view -O bam -o {output} -"
 
 rule meryl_db_repetitive_extract:
     output: config[utils.REFERENCE] + "_k{k,\d+}.txt"
@@ -289,12 +292,14 @@ checkpoint split_fastq:
     resources:
         mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
     params:
-        cut_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fastq", "fq"))) == 0 else f"<(cat {' '.join(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=('fastq', 'fq')))})",
+        cat_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fastq", "fq"))) == 0 else f"<(cat {' '.join(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=('fastq', 'fq')))})",
         zcat_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fastq.gz", "fq.gz"))) == 0 else f"<(zcat {' '.join(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=('fastq.gz', 'fq.gz')))})",
         prefix=lambda wc: os.path.join(alignment_output_dir, f"{wc.sample}_{wc.tech}_fastq", f"{wc.sample}_{wc.tech}_fastq_"),
         fastq_cnt=lambda wc: get_reads_batch_cnt(aligner=get_aligner(sample=wc.sample, tech=wc.tech), default=200000) * 4,
+        bgzip=config.get(utils.TOOLS,{}).get(utils.BGZIP,{}).get(utils.PATH,"bgzip"),
     shell:
-        "mkdir -p {output} && cat {params.cut_command} {params.zcat_command} | split -l {params.fastq_cnt} -a 3 - {params.prefix}"
+        "mkdir -p {output} && cat {params.cat_command} {params.zcat_command} |"
+        " split -l {params.fastq_cnt} -a 3 --filter='{params.bgzip} -c > $FILE.fastq.gz' - {params.prefix}"
 
 checkpoint split_fasta:
     output:
@@ -305,13 +310,16 @@ checkpoint split_fasta:
     resources:
         mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
     params:
-        cut_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta", "fa"))) == 0 else "<(cat {fasta})".format(fasta=" ".join(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta", "fa")))),
+        cat_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta", "fa"))) == 0 else "<(cat {fasta})".format(fasta=" ".join(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta", "fa")))),
         zcat_command=lambda wc: "" if len(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta.gz", "fa.gz"))) == 0 else "<(zcat {fasta_gz})".format(fasta_gz=" ".join(get_fastx_files(sample=wc.sample, tech=wc.tech, extension=("fasta.gz", "fa.gz")))),
         prefix=lambda wc: os.path.join(alignment_output_dir, f"{wc.sample}_{wc.tech}_fasta", f"{wc.sample}_{wc.tech}_fasta_"),
         fasta_cnt=lambda wc: get_reads_batch_cnt(aligner=get_aligner(sample=wc.sample, tech=wc.tech), default=200000) * 2,
         seqtk_command=lambda wc: seqtk_config.get(utils.PATH, "seqtk"),
+        bgzip=config.get(utils.TOOLS, {}).get(utils.BGZIP, {}).get(utils.PATH, "bgzip"),
     shell:
-        "mkdir -p {output} && cat {params.cut_command} {params.zcat_command} | seqtk seq - | split -l {params.fasta_cnt} -a 3 - {params.prefix}"
+        "mkdir -p {output} && cat {params.cat_command} {params.zcat_command} |"
+        " seqtk seq - |"
+        " split -l {params.fasta_cnt} -a 3 --filter='{params.bgzip} -c > $FILE.fasta.gz' - {params.prefix}"
 
 rule samtools_tmp_dir:
     output: temp(directory(os.path.join(config["tools"].get(utils.TMP_DIR, ""), "samtools_tmp_{sample}_{tech}_{seq_format}_{chunk_id}")))

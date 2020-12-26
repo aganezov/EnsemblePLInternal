@@ -105,7 +105,7 @@ ENABLE_ALIGNMENT_STATS = "enable_alignment_stats"
 
 
 EXISTING_ALIGNMENTS = "existing_alignments"
-
+BGZIP = "bgzip"
 
 ##########
 #
