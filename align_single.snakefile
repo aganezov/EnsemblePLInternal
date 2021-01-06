@@ -134,7 +134,7 @@ def aggregated_input_for_bam_merging(wildcards):
 rule single_bam_to_sort_bam:
     output:temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}_{chunk_id,[a-z]+}.sort.bam"))
     input:
-        bam=os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}_{chunk_id}.bam"),
+        sam=os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}_{chunk_id}.sam"),
         reads=os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}", "{sample}_{tech}_{seq_format}_{chunk_id}.{seq_format}.gz"),
         tmp_dir=lambda wc: os.path.join(config["tools"].get(utils.TMP_DIR, ""), f"samtools_tmp_{wc.sample}_{wc.tech}_{wc.seq_format}_{wc.chunk_id}")
     threads:lambda wildcards: min(cluster_config.get("single_sam_to_sort_bam", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), samtools_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
@@ -147,7 +147,7 @@ rule single_bam_to_sort_bam:
         samtools=samtools_config.get(utils.PATH, "samtools"),
         mem_mb_per_thread=samtools_config.get(utils.MEM_MB_PER_THREAD, 1000),
     shell:
-        "{params.samtools} sort -O bam -o {output} -@ {threads} -m {params.mem_mb_per_thread}M -T {params.tmp_dir} {input.bam} &> {log}"
+        "{params.samtools} sort -O bam -o {output} -@ {threads} -m {params.mem_mb_per_thread}M -T {params.tmp_dir} {input.sam} &> {log}"
 
 rule clear_corrupt_sam_alignments:
     output: temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}" + "_{chunk_id,[a-z]+}.fixed.sam"))
@@ -214,7 +214,7 @@ def get_aligner_preset(aligner, tech):
 
 
 rule single_alignment:
-    output:temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}" + "_{chunk_id,[a-z]+}.bam"))
+    output:temp(os.path.join(alignment_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_{seq_format,(fastq|fasta)}" + "_{chunk_id,[a-z]+}.sam"))
     input: reads=os.path.join(alignment_output_dir, "{sample}_{tech}_{seq_format}", "{sample}_{tech}_{seq_format}_{chunk_id}.{seq_format}.gz"),
            meryld_db=lambda wc: f"{config[utils.REFERENCE]}_k{meryl_config.get(utils.K, 15)}.txt" if get_aligner(sample=wc.sample, tech=wc.tech, default="ngmlr") == "winnowmap" else os.path.join(alignment_output_dir, f"{wc.sample}_{wc.tech}_{wc.seq_format}", f"{wc.sample}_{wc.tech}_{wc.seq_format}_{wc.chunk_id}.{wc.seq_format}.gz"),
            reference=config[utils.REFERENCE],
@@ -237,7 +237,7 @@ rule single_alignment:
         samtools=samtools_config.get(utils.PATH,"samtools"),
     shell:
          "{params.aligner} {params.w_db_flag} {params.w_flag} {params.k_flag} {params.reference_flag} {input.reference} {params.input_flag} {input.reads} -t {threads}"
-         " -x {params.preset_value} {params.sam_output_flag} {params.bam_fix_flag} {params.md_flag} 2> {log} | {params.samtools} view -O bam -o {output} -"
+         " -x {params.preset_value} {params.sam_output_flag} {params.bam_fix_flag} {params.md_flag} 2> {log} > {output}"
 
 rule meryl_db_repetitive_extract:
     output: config[utils.REFERENCE] + "_k{k,\d+}.txt"
