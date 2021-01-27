@@ -187,6 +187,7 @@ rule refined_sensitive_new_sv_types:
            bam=os.path.join(alignment_output_dir, "{sample}_{tech}.sort.bam"),
            bam_bai=os.path.join(alignment_output_dir, "{sample}_{tech}.sort.bam.bai"),
            bam_file_list=os.path.join(ins_to_dup_output_dir, "{sample}_{tech}_sniffles", "bams.txt"),
+           ref=config[utils.REFERENCE],
     output: vcf=os.path.join(iris_refined_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles", "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "_dupToIns_irisRefined.vcf"),
             vcf_file_list=os.path.join(iris_refined_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles", "vcf_list_dupToIns_irisRefined.txt")
     threads: lambda wc: min(cluster_config.get("refined_sensitive_new_sv_types", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), iris_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
@@ -197,7 +198,6 @@ rule refined_sensitive_new_sv_types:
         output_dir=lambda wc: os.path.join(iris_refined_output_dir, wc.sample + "_" + wc.tech + "_sniffles"),
         iris_output_dir=lambda wc: os.path.join(iris_refined_output_dir, wc.sample + "_" + wc.tech + "_sniffles", "iris"),
         samtools=samtools_config.get(utils.PATH, "samtools"),
-        ref_genome=config[utils.REFERENCE],
         java_src=":".join(x for x in [jasmine_config.get(utils.SRC_PATH, ""), iris_config.get(utils.SRC_PATH, "")] if len(x) > 0),
         java=java_config.get(utils.PATH, "java"),
         minimap2=minimap2_config.get(utils.PATH, "minimap2"),
@@ -207,7 +207,7 @@ rule refined_sensitive_new_sv_types:
         max_ins_dist=iris_config.get(utils.MAX_INS_DIST, 100),
         max_length_change=iris_config.get(utils.MAX_LENGTH_CHANGE, 0.25),
     shell:
-        "{params.java} -cp {params.java_src} Main file_list={input.vcf_file_list} --run_iris --preprocess_only genome_file={params.ref_genome} bam_list={input.bam_file_list} "
+        "{params.java} -cp {params.java_src} Main file_list={input.vcf_file_list} --run_iris --preprocess_only genome_file={input.ref} bam_list={input.bam_file_list} "
         "--iris_args=minimap_path={params.minimap2},racon_path={params.racon},samtools_path={params.samtools},threads={threads},out_dir={params.iris_output_dir},"
         "min_ins_length={params.min_ins_length},max_out_length={params.max_out_length},max_ins_dist={params.max_ins_dist},max_length_change={params.max_length_change},--keep_long_variants,"
         "--resume out_dir={params.output_dir} out_file=test.vcf &> {log}"
@@ -223,9 +223,10 @@ rule create_bam_file_list:
             print(input[0], file=dest)
 
 
-rule sensitive_ins_to_dup_conversion:
+rule sensitive_dup_to_ins_conversion:
     input: vcf=os.path.join(raw_svs_output_dir, "{sample}_{tech}_sniffles." + sniffles_sens_suffix + ".vcf"),
-           vcf_file_list=os.path.join(refined_svs_output_dir, "{sample}_{tech}_sniffles", "vcf_list.txt")
+           vcf_file_list=os.path.join(refined_svs_output_dir, "{sample}_{tech}_sniffles", "vcf_list.txt"),
+           ref=config[utils.REFERENCE],
     output: vcf=temp(os.path.join(ins_to_dup_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles", "{sample}_{tech}_sniffles." + sniffles_sens_suffix + "_dupToIns.vcf")),
             vcf_file_list=temp(os.path.join(ins_to_dup_output_dir, "{sample," + samples_regex + "}_{tech," + tech_regex + "}_sniffles", "vcf_list_dupToIns.txt"))
     threads: lambda wc: min(cluster_config.get("sensitive_ins_to_dup_conversion", {}).get(utils.NCPUS, utils.DEFAULT_THREAD_CNT), jasmine_config.get(utils.THREADS, utils.DEFAULT_THREAD_CNT))
@@ -234,13 +235,12 @@ rule sensitive_ins_to_dup_conversion:
         mem_mb=lambda wildcards, threads: jasmine_config.get(utils.MEM_MB_CORE, 10000) + jasmine_config.get(utils.MEM_MB_PER_THREAD, 1000) * threads
     params:
         output_dir=lambda wc: os.path.join(ins_to_dup_output_dir, wc.sample + "_" + wc.tech + "_sniffles"),
-        ref_genome=config[utils.REFERENCE],
         java_src=":".join(x for x in [jasmine_config.get(utils.SRC_PATH, ""), iris_config.get(utils.SRC_PATH, "")] if len(x) > 0),
         java=java_config.get(utils.PATH, "java"),
         samtools=samtools_config.get(utils.PATH, "samtools"),
         max_dup_length=jasmine_config.get(utils.INS_TO_DUP, {}).get(utils.MAX_DUP_LENGTH, 10000),
     shell:
-         "{params.java} -cp {params.java_src} Main file_list={input.vcf_file_list} --dup_to_ins genome_file={params.ref_genome} "
+         "{params.java} -cp {params.java_src} Main file_list={input.vcf_file_list} --dup_to_ins genome_file={input.ref} "
          "--preprocess_only out_dir={params.output_dir} threads={threads} samtools_path={params.samtools} max_dup_length={params.max_dup_length} out_file=test.vcf &> {log}"
 
 rule create_first_vcf_file_list:
