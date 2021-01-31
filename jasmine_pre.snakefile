@@ -32,7 +32,7 @@ sv_sizes_config=config.get(utils.TOOLS, {}).get(utils.SV_SIZES, {})
 rule sv_tally:
     input: os.path.join(refined_svs_output_dir, "{file}")
     output: os.path.join(refined_svs_output_dir, utils.STATS, "{file}.stats.sizes.txt")
-    log: os.path.join(raw_svs_output_dir, utils.LOG, "{file}.stats.sizes.txt.log")
+    log: os.path.join(refined_svs_output_dir, utils.LOG, "{file}.stats.sizes.txt.log")
     resources:
         mem_mb=utils.DEFAULT_CLUSTER_MEM_MB
     params:
